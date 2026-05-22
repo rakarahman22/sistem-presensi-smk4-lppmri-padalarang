@@ -9,7 +9,7 @@ use Illuminate\Notifications\Notifiable;
 
 class Admin extends Authenticatable
 
-//model admin
+
 {
     use Notifiable;
 
