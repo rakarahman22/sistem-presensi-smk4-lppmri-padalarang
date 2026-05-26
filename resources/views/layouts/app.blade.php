@@ -153,6 +153,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <!-- PENTING: PINDAHKAN SCRIPT BOOTSTRAP KE SINI (DI ATAS CHART.JS DAN STACK SCRIPTS) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bundle.min.js"></script>
     

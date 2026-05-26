@@ -1,4 +1,4 @@
-<div class="sidebar">
+<div class="sidebar" style="height: 100vh; overflow-y: auto; position: fixed; display: flex; flex-direction: column; justify-content: space-between;">
     <div>
         <!-- BRANDING JUDUL PANEL SIDEBAR -->
         <div class="sidebar-brand">
@@ -15,7 +15,7 @@
 
         <div class="nav-menu">
             <!-- ========================================================================= -->
-            <!-- FITUR AKSES: ADMIN PANEL (FIXED USING GUARD CHECK) -->
+            <!-- FITUR AKSES: ADMIN PANEL -->
             <!-- ========================================================================= -->
             @if (Auth::guard('admin')->check())
                 <a href="/admin/dashboard" class="nav-link-custom {{ request()->is('admin/dashboard') ? 'active' : '' }}">
@@ -37,38 +37,57 @@
                     class="nav-link-custom {{ request()->is('admin/data-kelas*') ? 'active' : '' }}">
                     <i class="bi bi-collection-fill"></i> Data Kelas
                 </a>
+                <a href="{{ route('admin.mapel') }}"
+                    class="nav-link-custom {{ request()->is('admin/data-mapel*') ? 'active' : '' }}">
+                    <i class="bi bi-book-half"></i> Data Mapel
+                </a>
+                <a href="{{ route('admin.plot') }}"
+                    class="nav-link-custom {{ request()->is('admin/plot-mengajar*') ? 'active' : '' }}">
+                    <i class="bi bi-person-lines-fill"></i> Plotting Mengajar
+                </a>
                 <a href="/admin/presensi-siswa"
                     class="nav-link-custom {{ request()->is('admin/presensi-siswa*') ? 'active' : '' }}">
                     <i class="bi bi-calendar-check-fill"></i> Presensi Siswa
                 </a>
-                <a href="/admin/laporan" class="nav-link-custom {{ request()->is('admin/laporan*') ? 'active' : '' }}">
-                    <i class="bi bi-file-earmark-bar-graph-fill"></i> Laporan
-                    <a href="{{ route('admin.lokasi') }}"
-                        class="nav-link-custom {{ request()->routeIs('admin.lokasi') ? 'active' : '' }}">
-                        <i class="bi bi-geo-alt-fill"></i> Pengaturan Lokasi
-                    </a>
 
-                    <a href="{{ route('admin.pengaturan') }}"
-                        class="nav-link-custom {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}">
-                        <i class="bi bi-gear-fill"></i> Pengaturan
-                    </a>
+                {{-- ✅ PERBAIKAN: tag <a> Laporan ditutup dengan benar --}}
+                <a href="/admin/laporan"
+                    class="nav-link-custom {{ request()->is('admin/laporan*') ? 'active' : '' }}">
+                    <i class="bi bi-file-earmark-bar-graph-fill"></i> Laporan
+                </a>
+
+                {{-- ✅ PERBAIKAN: Lokasi & Pengaturan sekarang di luar tag Laporan --}}
+                <a href="{{ route('admin.lokasi') }}"
+                    class="nav-link-custom {{ request()->routeIs('admin.lokasi') ? 'active' : '' }}">
+                    <i class="bi bi-geo-alt-fill"></i> Pengaturan Lokasi
+                </a>
+
+                <a href="{{ route('admin.pengaturan') }}"
+                    class="nav-link-custom {{ request()->routeIs('admin.pengaturan') ? 'active' : '' }}">
+                    <i class="bi bi-gear-fill"></i> Pengaturan
+                </a>
             @endif
 
             <!-- ========================================================================= -->
-            <!-- FITUR AKSES: GURU PANEL (FIXED USING GUARD CHECK) -->
+            <!-- FITUR AKSES: GURU PANEL -->
             <!-- ========================================================================= -->
-            @if (Auth::guard('guru')->check())
+            @if(Auth::guard('guru')->check())
                 <a href="/guru/dashboard"
                     class="nav-link-custom {{ request()->is('guru/dashboard') ? 'active' : '' }}">
                     <i class="bi bi-house-door-fill"></i> Beranda Guru
                 </a>
-                <a href="#" class="nav-link-custom">
+                <a href="{{ route('guru.absen-mapel.index') }}"
+                    class="nav-link-custom {{ request()->is('guru/absen-mapel*') ? 'active' : '' }}">
+                    <i class="bi bi-journal-check"></i> Absen Per Mapel
+                </a>
+                <a href="{{ route('guru.absen-mapel.rekap') }}"
+                    class="nav-link-custom {{ request()->is('guru/rekap-absen-mapel*') ? 'active' : '' }}">
                     <i class="bi bi-calendar-check-fill"></i> Rekap Absensi Kelas
                 </a>
             @endif
 
             <!-- ========================================================================= -->
-            <!-- FITUR AKSES: WALI MURID (FIXED USING GUARD CHECK) -->
+            <!-- FITUR AKSES: WALI MURID -->
             <!-- ========================================================================= -->
             @if (Auth::guard('wali')->check())
                 <a href="/wali/dashboard"
@@ -81,37 +100,34 @@
             @endif
 
             <!-- ========================================================================= -->
-            <!-- FITUR AKSES: SISWA PANEL (FIXED USING GUARD CHECK) -->
+            <!-- FITUR AKSES: SISWA PANEL -->
             <!-- ========================================================================= -->
             @if (Auth::guard('siswa')->check())
                 <a href="/siswa/dashboard"
                     class="nav-link-custom {{ request()->is('siswa/dashboard') ? 'active' : '' }}">
                     <i class="bi bi-house-door-fill"></i> Dashboard
                 </a>
-
                 <a href="/siswa/presensi"
                     class="nav-link-custom {{ request()->is('siswa/presensi') ? 'active' : '' }}">
                     <i class="bi bi-camera-fill"></i> Presensi Harian
                 </a>
-
                 <a href="/siswa/riwayat-presensi"
                     class="nav-link-custom {{ request()->is('siswa/riwayat-presensi') ? 'active' : '' }}">
                     <i class="bi bi-clock-history"></i> Riwayat Presensi
                 </a>
-
                 <a href="/siswa/pesan-guru"
                     class="nav-link-custom {{ request()->is('siswa/pesan-guru') ? 'active' : '' }}">
                     <i class="bi bi-chat-dots-fill"></i> Pesan Guru
                 </a>
-
-                <a href="/siswa/profil" class="nav-link-custom {{ request()->is('siswa/profil') ? 'active' : '' }}">
+                <a href="/siswa/profil"
+                    class="nav-link-custom {{ request()->is('siswa/profil') ? 'active' : '' }}">
                     <i class="bi bi-person-circle"></i> Profil
                 </a>
             @endif
         </div>
     </div>
 
-    <!-- TOMBOL KELUAR SISTEM (LOGOUT SANITIZED) -->
+    <!-- TOMBOL KELUAR SISTEM -->
     <div>
         <hr class="text-muted opacity-25">
         <form action="{{ route('logout') }}" method="POST" id="logout-form">

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PengaturanController;
 use App\Http\Controllers\Admin\PresensiAdminController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\WaliSiswaController; 
+use App\Http\Controllers\Admin\PlotMengajarController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Siswa\PresensiController as SiswaPresensiController; 
 use Illuminate\Support\Facades\Route;
@@ -44,8 +45,28 @@ Route::prefix('siswa')->middleware('auth:siswa')->group(function () {
  * AREA ROUTE GURU
  * =========================================================================
  */
-Route::middleware('auth:guru')->prefix('guru')->group(function () {
+Route::middleware(['web', 'auth:guru'])->prefix('guru')->group(function () {
     Route::get('/dashboard', function() { return view('guru.dashboard'); })->name('guru.dashboard');
+
+    // FITUR ABSEN PER MATA PELAJARAN (MAPEL)
+    Route::get('/absen-mapel', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'index'])->name('guru.absen-mapel.index');
+    Route::post('/absen-mapel/buka-sesi', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'storeSesi'])->name('guru.absen-mapel.buka-sesi');
+    Route::get('/absen-mapel/isi/{id_mengajar}', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'isiAbsen'])->name('guru.absen-mapel.isi');
+    Route::post('/absen-mapel/simpan/{id_mengajar}', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'updateAbsen'])->name('guru.absen-mapel.simpan');
+
+    // FITUR REKAP ABSEN PER MATA PELAJARAN (MAPEL)
+    Route::get('/rekap-absen-mapel', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'rekapIndex'])->name('guru.absen-mapel.rekap');
+    Route::get('/rekap-absen-mapel/tampil', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'rekapTampil'])->name('guru.absen-mapel.rekap.tampil');
+
+    // API Cek Pertemuan Absen Mapel
+    Route::get('/absen-mapel/cek-pertemuan', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'cekPertemuanKe'])->name('guru.absen-mapel.cek-pertemuan');
+
+    // =========================================================================
+    // FIX: TAMBAHKAN BARIS INI (SINKRONISASI FILTER MAPEL GURU)
+    // =========================================================================
+    Route::get('/absen-mapel/get-mapel', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'getMapelByKelasGuru'])->name('guru.absen-mapel.get-mapel');
+
+    Route::post('/absen-mapel/tambah-mapel-ajax', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'tambahMapelAjax'])->name('guru.absen-mapel.tambah-mapel-ajax');
 });
 
 /**
@@ -67,6 +88,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // Halaman Dashboard Utama Admin
     Route::get('/dashboard', function() { return view('admin.dashboard'); })->name('admin.dashboard');
 
+    
     // CRUD DATA SISWA
     Route::get('/data-siswa', [SiswaController::class, 'index'])->name('admin.siswa');
     Route::get('/data-siswa/create', [SiswaController::class, 'create'])->name('admin.siswa.create');
@@ -98,6 +120,20 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/data-kelas/{id_kelas}/edit', [KelasController::class, 'edit'])->name('admin.kelas.edit');
     Route::put('/data-kelas/{id_kelas}', [KelasController::class, 'update'])->name('admin.kelas.update');
     Route::delete('/data-kelas/{id_kelas}', [KelasController::class, 'destroy'])->name('admin.kelas.destroy');
+
+    // CRUD DATA MASTER MATA PELAJARAN
+    Route::get('/data-mapel', [\App\Http\Controllers\Admin\MapelController::class, 'index'])->name('admin.mapel');
+    Route::post('/data-mapel', [\App\Http\Controllers\Admin\MapelController::class, 'store'])->name('admin.mapel.store');
+    Route::put('/data-mapel/{id_mapel}', [\App\Http\Controllers\Admin\MapelController::class, 'update'])->name('admin.mapel.update');
+    Route::delete('/data-mapel/{id_mapel}', [\App\Http\Controllers\Admin\MapelController::class, 'destroy'])->name('admin.mapel.destroy');
+
+    // CRUD PLOTTING GURU MENGAJAR KELAS & MAPEL
+Route::get('/plot-mengajar', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'index'])->name('admin.plot');
+Route::post('/plot-mengajar', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'store'])->name('admin.plot.store');
+Route::delete('/plot-mengajar/{id_plot}', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'destroy'])->name('admin.plot.destroy');
+
+// ✅ PERBAIKAN - samakan prefix dan namespace dengan route lainnya
+Route::get('/get-mapel-by-kelas', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'getMapelByKelas'])->name('admin.get.mapel.by.kelas');
 
     // MONITORING PRESENSI SISWA (REALTIME HARI INI)
     Route::get('/presensi-siswa', [PresensiAdminController::class, 'index'])->name('admin.presensi');

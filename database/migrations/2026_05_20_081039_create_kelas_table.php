@@ -10,7 +10,10 @@ return new class extends Migration
     {
         Schema::create('kelas', function (Blueprint $table) {
             $table->id('id_kelas');
-            $table->unsignedBigInteger('id_guru')->nullable(); // ← Kunci Wali Kelas (Boleh Kosong)
+            
+            // FIX: Tambahkan ->unique() agar satu id_guru tidak bisa dipakai di kelas lain!
+            $table->unsignedBigInteger('id_guru')->nullable()->unique(); 
+            
             $table->string('nama_kelas');
             $table->string('tingkat');
             $table->string('jurusan');
