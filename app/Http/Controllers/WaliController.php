@@ -13,19 +13,18 @@ class WaliController extends Controller
      */
     private function shareSidebarData($wali)
     {
-        $jumlahNotif = 0; // Sesuaikan jika tabel notifikasi sudah siap
+        $jumlahNotif = 0;
         $inisial     = '';
-        
+
         if ($wali && $wali->nama_wali) {
             $namaArr = explode(' ', $wali->nama_wali);
             $inisial = strtoupper(substr($namaArr[0], 0, 1) . (isset($namaArr[1]) ? substr($namaArr[1], 0, 1) : ''));
         }
 
-        // Share secara aman setelah user dipastikan lolos autentikasi
         view()->share([
-            'wali' => $wali,
+            'wali'        => $wali,
             'jumlahNotif' => $jumlahNotif,
-            'inisial' => $inisial
+            'inisial'     => $inisial,
         ]);
     }
 
@@ -33,68 +32,91 @@ class WaliController extends Controller
     // DASHBOARD
     // =========================================================================
     public function dashboard()
-{
-    $wali      = Auth::guard('wali')->user();
-    $siswaList = $wali->siswa()->with('kelas')->get();
+    {
+        $wali      = Auth::guard('wali')->user();
+        $siswaList = $wali->siswa()->with('kelas')->get();
 
-    $totalHadir = 0; $totalSakit = 0; $totalIzin = 0; $totalAlpha = 0;
-    foreach ($siswaList as $s) {
-        // FIX: Ubah 'tanggal' menjadi 'tgl_presensi', dan sesuaikan huruf kapital status enum
-        $totalHadir += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Hadir')->count();
-        $totalSakit += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Sakit')->count();
-        $totalIzin  += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Izin')->count();
-        $totalAlpha += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Alpa')->count();
+        $totalHadir = 0;
+        $totalSakit = 0;
+        $totalIzin  = 0;
+        $totalAlpha = 0;
+
+        foreach ($siswaList as $s) {
+            $totalHadir += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Hadir')->count();
+            $totalSakit += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Sakit')->count();
+            $totalIzin  += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Izin')->count();
+            $totalAlpha += $s->presensi()->whereMonth('tgl_presensi', now()->month)->whereYear('tgl_presensi', now()->year)->where('status', 'Alpa')->count();
+        }
+
+        $this->shareSidebarData($wali);
+
+        return view('wali.dashboard', compact(
+            'wali', 'siswaList', 'totalHadir', 'totalSakit', 'totalIzin', 'totalAlpha'
+        ));
     }
-
-    // Panggil helper share data ke sidebar
-    $this->shareSidebarData($wali);
-
-    return view('wali.dashboard', compact(
-        'wali', 'siswaList', 'totalHadir', 'totalSakit', 'totalIzin', 'totalAlpha'
-    ));
-}
 
     // =========================================================================
     // RIWAYAT KEHADIRAN ANAK
     // =========================================================================
     public function riwayatKehadiran(Request $request)
-{
-    $wali      = Auth::guard('wali')->user();
-    $siswaList = $wali->siswa()->with('kelas')->get();
+    {
+        $wali      = Auth::guard('wali')->user();
+        $siswaList = $wali->siswa()->with('kelas')->get();
 
-    $bulan         = $request->input('bulan', now()->month);
-    $tahun         = $request->input('tahun', now()->year);
-    $idSiswaFilter = $request->input('id_siswa');
+        // ── Parameter filter ──────────────────────────────────
+        // Cast ke (int) wajib — request selalu mengirim string, Carbon menolak string di whereMonth/whereYear
+        $bulan         = (int) $request->input('bulan', now()->month);
+        $tahun         = (int) $request->input('tahun', now()->year);
+        $idSiswaFilter = $request->input('id_siswa');
 
-    $riwayat = collect();
-    foreach ($siswaList as $siswa) {
-        if ($idSiswaFilter && $siswa->id_siswa != $idSiswaFilter) continue;
+        // null-kan string kosong agar kondisi ($tglDari && $tglSampai) tidak lolos
+        // ketika user mengosongkan input lalu klik filter
+        $tglDari   = $request->input('tgl_dari')   ?: null;
+        $tglSampai = $request->input('tgl_sampai') ?: null;
 
-        // FIX: Ubah 'tanggal' menjadi 'tgl_presensi' di filter query
-        $presensi = $siswa->presensi()
-            ->whereMonth('tgl_presensi', $bulan)
-            ->whereYear('tgl_presensi', $tahun)
-            ->orderBy('tgl_presensi', 'desc')
-            ->get()
-            ->map(function ($p) use ($siswa) {
-                $p->nama_siswa = $siswa->nama_siswa;
-                $p->kelas      = $siswa->kelas->nama_kelas ?? '-';
-                return $p;
-            });
+        // ── Ambil data presensi ───────────────────────────────
+        $riwayat = collect();
 
-        $riwayat = $riwayat->merge($presensi);
+        foreach ($siswaList as $siswa) {
+            if ($idSiswaFilter && $siswa->id_siswa != $idSiswaFilter) continue;
+
+            $query = $siswa->presensi();
+
+            // Prioritaskan filter tanggal spesifik jika keduanya diisi
+            if ($tglDari && $tglSampai) {
+                $query->whereBetween('tgl_presensi', [$tglDari, $tglSampai]);
+            } else {
+                $query->whereMonth('tgl_presensi', $bulan)
+                      ->whereYear('tgl_presensi', $tahun);
+            }
+
+            $presensi = $query
+                ->orderBy('tgl_presensi', 'desc')
+                ->get()
+                ->map(function ($p) use ($siswa) {
+                    $p->nama_siswa = $siswa->nama_siswa;
+                    $p->kelas      = $siswa->kelas->nama_kelas ?? '-';
+                    return $p;
+                });
+
+            $riwayat = $riwayat->merge($presensi);
+        }
+
+        $riwayat = $riwayat->sortByDesc('tgl_presensi')->values();
+
+        $this->shareSidebarData($wali);
+
+        return view('wali.riwayat-kehadiran', compact(
+            'wali',
+            'siswaList',
+            'riwayat',
+            'bulan',
+            'tahun',
+            'idSiswaFilter',
+            'tglDari',       // <-- BARU, dibutuhkan view untuk toggle filter & label progress bar
+            'tglSampai'      // <-- BARU
+        ));
     }
-
-    // FIX: Urutkan koleksi berdasarkan 'tgl_presensi'
-    $riwayat = $riwayat->sortByDesc('tgl_presensi')->values();
-
-    // Panggil helper share data ke sidebar
-    $this->shareSidebarData($wali);
-
-    return view('wali.riwayat-kehadiran', compact(
-        'wali', 'siswaList', 'riwayat', 'bulan', 'tahun', 'idSiswaFilter'
-    ));
-}
 
     // =========================================================================
     // PROFIL SAYA
@@ -102,8 +124,6 @@ class WaliController extends Controller
     public function profil()
     {
         $wali = Auth::guard('wali')->user();
-        
-        // Panggil helper share data ke sidebar
         $this->shareSidebarData($wali);
 
         return view('wali.profil', compact('wali'));
@@ -115,8 +135,6 @@ class WaliController extends Controller
     public function notifikasi()
     {
         $wali = Auth::guard('wali')->user();
-        
-        // Panggil helper share data ke sidebar
         $this->shareSidebarData($wali);
 
         return view('wali.notifikasi', compact('wali'));
@@ -160,10 +178,10 @@ class WaliController extends Controller
             'password_baru'              => 'required|min:6|confirmed',
             'password_baru_confirmation' => 'required',
         ], [
-            'password_lama.required' => 'Password lama wajib diisi.',
-            'password_baru.required' => 'Password baru wajib diisi.',
-            'password_baru.min'      => 'Password baru minimal 6 karakter.',
-            'password_baru.confirmed'=> 'Konfirmasi password tidak cocok.',
+            'password_lama.required'  => 'Password lama wajib diisi.',
+            'password_baru.required'  => 'Password baru wajib diisi.',
+            'password_baru.min'       => 'Password baru minimal 6 karakter.',
+            'password_baru.confirmed' => 'Konfirmasi password tidak cocok.',
         ]);
 
         if (!Hash::check($request->password_lama, $wali->password)) {
@@ -183,6 +201,7 @@ class WaliController extends Controller
         Auth::guard('wali')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/login')->with('success', 'Anda telah berhasil keluar.');
     }
 }

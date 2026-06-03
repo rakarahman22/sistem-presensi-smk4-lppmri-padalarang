@@ -15,7 +15,11 @@ class Presensi extends Model
         'jam_masuk',
         'lat_siswa',
         'long_siswa',
-        'status'
+        'status',
+        'keterangan',
+        'status_awal',
+        'dikoreksi_oleh',
+        'edited_at',
     ];
 
     public function siswa()
@@ -28,4 +32,3 @@ class Presensi extends Model
         return $this->belongsTo(Guru::class, 'id_guru');
     }
 }
-

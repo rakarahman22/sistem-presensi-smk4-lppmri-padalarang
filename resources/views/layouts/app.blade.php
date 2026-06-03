@@ -7,9 +7,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
-    <!-- PENTING: HAPUS SCRIPT BOOTSTRAP DARI SINI -->
-    
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -17,7 +15,9 @@
             overflow-x: hidden;
         }
 
-        /* Sidebar Styling */
+        /* ===================================================
+           SIDEBAR
+        =================================================== */
         .sidebar {
             width: 260px;
             height: 100vh;
@@ -26,13 +26,81 @@
             left: 0;
             background-color: #ffffff;
             border-right: 1px solid #e2e8f0;
-            z-index: 1000;
+            z-index: 1050;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 2rem 1rem;
+            transition: transform 0.28s ease;
         }
 
+        /* Di mobile: sidebar disembunyikan ke kiri */
+        @media (max-width: 767.98px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.sidebar-open {
+                transform: translateX(0);
+            }
+        }
+
+        /* ===================================================
+           OVERLAY (backdrop gelap saat sidebar terbuka di mobile)
+        =================================================== */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 1040;
+        }
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* ===================================================
+           TOPBAR MOBILE (hanya muncul di layar kecil)
+        =================================================== */
+        .mobile-topbar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 56px;
+            background: #fff;
+            border-bottom: 1px solid #e2e8f0;
+            z-index: 1030;
+            align-items: center;
+            padding: 0 1rem;
+            gap: 12px;
+        }
+        @media (max-width: 767.98px) {
+            .mobile-topbar { display: flex; }
+        }
+
+        .btn-hamburger {
+            background: none;
+            border: none;
+            padding: 6px;
+            border-radius: 8px;
+            color: #1e293b;
+            font-size: 1.3rem;
+            cursor: pointer;
+            line-height: 1;
+        }
+        .btn-hamburger:hover { background: #f1f5f9; }
+
+        .mobile-topbar-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #14532d;
+            flex: 1;
+        }
+
+        /* ===================================================
+           SIDEBAR BRAND & NAV
+        =================================================== */
         .sidebar-brand {
             font-size: 1.35rem;
             font-weight: 700;
@@ -59,16 +127,8 @@
             border-radius: 10px;
             transition: all 0.2s ease;
         }
-
-        .nav-link-custom:hover {
-            background-color: #f1f5f9;
-            color: #1e293b;
-        }
-
-        .nav-link-custom.active {
-            background-color: #15803d;
-            color: #ffffff;
-        }
+        .nav-link-custom:hover { background-color: #f1f5f9; color: #1e293b; }
+        .nav-link-custom.active { background-color: #15803d; color: #ffffff; }
 
         .btn-logout-sidebar {
             display: flex;
@@ -84,13 +144,13 @@
             text-align: left;
             border-radius: 10px;
             transition: all 0.2s ease;
+            cursor: pointer;
         }
+        .btn-logout-sidebar:hover { background-color: #fef2f2; }
 
-        .btn-logout-sidebar:hover {
-            background-color: #fef2f2;
-        }
-
-        /* Main Content Styling */
+        /* ===================================================
+           MAIN CONTENT
+        =================================================== */
         .main-content {
             margin-left: 260px;
             padding: 2.5rem;
@@ -100,7 +160,18 @@
             justify-content: space-between;
         }
 
-        /* Stats Card Styling */
+        /* Di mobile: tidak ada margin kiri, tapi ada padding atas untuk topbar */
+        @media (max-width: 767.98px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1.25rem;
+                padding-top: calc(56px + 1.25rem);
+            }
+        }
+
+        /* ===================================================
+           STAT CARDS
+        =================================================== */
         .stat-card {
             background: #ffffff;
             border: none;
@@ -108,11 +179,10 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04);
             border-left: 5px solid #10b981;
         }
-
-        .stat-card.total-siswa { border-left-color: #15803d; }
-        .stat-card.siswa-hadir { border-left-color: #eab308; }
-        .stat-card.guru-aktif { border-left-color: #3b82f6; }
-        .stat-card.alpa-hari-ini { border-left-color: #ef4444; }
+        .stat-card.total-siswa  { border-left-color: #15803d; }
+        .stat-card.siswa-hadir  { border-left-color: #eab308; }
+        .stat-card.guru-aktif   { border-left-color: #3b82f6; }
+        .stat-card.alpa-hari-ini{ border-left-color: #ef4444; }
 
         .stat-label {
             font-size: 0.85rem;
@@ -120,14 +190,12 @@
             color: #64748b;
             margin-bottom: 0.25rem;
         }
-
         .stat-value {
             font-size: 1.75rem;
             font-weight: 700;
             color: #0f172a;
         }
 
-        /* Chart Card Styling */
         .chart-card {
             background: #ffffff;
             border: none;
@@ -139,26 +207,65 @@
 </head>
 <body>
 
-    <!-- Memanggil komponen sidebar tunggal -->
+    {{-- ===== OVERLAY (backdrop mobile) ===== --}}
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    {{-- ===== TOPBAR MOBILE ===== --}}
+    <div class="mobile-topbar">
+        <button class="btn-hamburger" id="btnHamburger" aria-label="Buka menu">
+            <i class="bi bi-list"></i>
+        </button>
+        <span class="mobile-topbar-title">
+            @if (Auth::guard('admin')->check())  Admin Panel
+            @elseif(Auth::guard('guru')->check()) Guru Panel
+            @elseif(Auth::guard('wali')->check()) Wali Panel
+            @elseif(Auth::guard('siswa')->check()) Siswa Panel
+            @endif
+        </span>
+    </div>
+
+    {{-- ===== SIDEBAR ===== --}}
     @include('components.sidebar')
 
-    <!-- Konten Utama Dinamis -->
+    {{-- ===== MAIN CONTENT ===== --}}
     <div class="main-content">
         <div>
             @yield('content')
         </div>
-
         <div class="text-center text-muted small py-2 border-top opacity-75 mt-4">
             &copy; 2026 Sistem Presensi Geofencing SMK 4 LPPM RI Padalarang
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- PENTING: PINDAHKAN SCRIPT BOOTSTRAP KE SINI (DI ATAS CHART.JS DAN STACK SCRIPTS) -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bundle.min.js"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        const sidebar  = document.querySelector('.sidebar');
+        const overlay  = document.getElementById('sidebarOverlay');
+        const btnOpen  = document.getElementById('btnHamburger');
+
+        function openSidebar() {
+            sidebar.classList.add('sidebar-open');
+            overlay.classList.add('show');
+            document.body.style.overflow = 'hidden'; // cegah scroll body saat sidebar terbuka
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('sidebar-open');
+            overlay.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        btnOpen.addEventListener('click', openSidebar);
+        overlay.addEventListener('click', closeSidebar);
+
+        // Tutup sidebar otomatis saat link diklik (navigasi halaman baru)
+        sidebar.querySelectorAll('.nav-link-custom').forEach(function (link) {
+            link.addEventListener('click', closeSidebar);
+        });
+    </script>
+
     @stack('scripts')
 </body>
 </html>

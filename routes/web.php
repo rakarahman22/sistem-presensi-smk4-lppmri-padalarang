@@ -138,6 +138,9 @@ Route::get('/get-mapel-by-kelas', [\App\Http\Controllers\Admin\PlotMengajarContr
 
     // MONITORING PRESENSI SISWA (REALTIME HARI INI)
     Route::get('/presensi-siswa', [PresensiAdminController::class, 'index'])->name('admin.presensi');
+    Route::put('/admin/presensi-siswa/{id}/koreksi', [PresensiAdminController::class, 'koreksi'])
+    ->name('admin.presensi.koreksi');
+ 
 
     // LAPORAN PRESENSI
     Route::get('/laporan', function() { return view('admin.laporan'); })->name('admin.laporan');
