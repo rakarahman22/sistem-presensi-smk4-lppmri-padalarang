@@ -1,4 +1,5 @@
-<div class="sidebar" style="height: 100vh; overflow-y: auto; position: fixed; display: flex; flex-direction: column; justify-content: space-between;">
+<div class="sidebar"
+    style="height: 100vh; overflow-y: auto; position: fixed; display: flex; flex-direction: column; justify-content: space-between;">
     <div>
         <!-- BRANDING JUDUL PANEL SIDEBAR -->
         <div class="sidebar-brand">
@@ -51,8 +52,7 @@
                 </a>
 
                 {{-- ✅ PERBAIKAN: tag <a> Laporan ditutup dengan benar --}}
-                <a href="/admin/laporan"
-                    class="nav-link-custom {{ request()->is('admin/laporan*') ? 'active' : '' }}">
+                <a href="/admin/laporan" class="nav-link-custom {{ request()->is('admin/laporan*') ? 'active' : '' }}">
                     <i class="bi bi-file-earmark-bar-graph-fill"></i> Laporan
                 </a>
 
@@ -71,7 +71,7 @@
             <!-- ========================================================================= -->
             <!-- FITUR AKSES: GURU PANEL -->
             <!-- ========================================================================= -->
-            @if(Auth::guard('guru')->check())
+            @if (Auth::guard('guru')->check())
                 <a href="/guru/dashboard"
                     class="nav-link-custom {{ request()->is('guru/dashboard') ? 'active' : '' }}">
                     <i class="bi bi-house-door-fill"></i> Beranda Guru
@@ -90,12 +90,25 @@
             <!-- FITUR AKSES: WALI MURID -->
             <!-- ========================================================================= -->
             @if (Auth::guard('wali')->check())
-                <a href="/wali/dashboard"
-                    class="nav-link-custom {{ request()->is('wali/dashboard') ? 'active' : '' }}">
+                <a href="{{ route('wali.dashboard') }}"
+                    class="nav-link-custom {{ request()->routeIs('wali.dashboard') ? 'active' : '' }}">
                     <i class="bi bi-house-door-fill"></i> Beranda Wali
                 </a>
-                <a href="#" class="nav-link-custom">
+                <a href="{{ route('wali.riwayat-kehadiran') }}"
+                    class="nav-link-custom {{ request()->routeIs('wali.riwayat-kehadiran*') ? 'active' : '' }}">
                     <i class="bi bi-person-check-fill"></i> Kehadiran Anak
+                </a>
+
+                {{-- Menu Notifikasi --}}
+                <a href="{{ route('wali.notifikasi') }}"
+                    class="nav-link-custom {{ request()->routeIs('wali.notifikasi*') ? 'active' : '' }}">
+                    <i class="bi bi-bell-fill"></i> Notifikasi
+                </a>
+
+                {{-- Menu Profil Saya --}}
+                <a href="{{ route('wali.profil') }}"
+                    class="nav-link-custom {{ request()->routeIs('wali.profil*') ? 'active' : '' }}">
+                    <i class="bi bi-person-circle"></i> Profil Saya
                 </a>
             @endif
 
@@ -119,8 +132,7 @@
                     class="nav-link-custom {{ request()->is('siswa/pesan-guru') ? 'active' : '' }}">
                     <i class="bi bi-chat-dots-fill"></i> Pesan Guru
                 </a>
-                <a href="/siswa/profil"
-                    class="nav-link-custom {{ request()->is('siswa/profil') ? 'active' : '' }}">
+                <a href="/siswa/profil" class="nav-link-custom {{ request()->is('siswa/profil') ? 'active' : '' }}">
                     <i class="bi bi-person-circle"></i> Profil
                 </a>
             @endif

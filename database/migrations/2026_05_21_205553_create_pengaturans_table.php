@@ -24,6 +24,7 @@ return new class extends Migration
         // Aturan presensi
         $table->time('jam_masuk')->nullable();
         $table->time('batas_terlambat')->nullable();
+        $table->time('jam_pulang')->nullable();
 
         // Simpan array hari kerja dalam JSON
         $table->json('hari_kerja')->nullable();

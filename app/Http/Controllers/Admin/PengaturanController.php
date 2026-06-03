@@ -18,7 +18,7 @@ class PengaturanController extends Controller
         // Ambil pengaturan pertama
         $pengaturan = Pengaturan::first();
 
-        // Jika belum ada data pengaturan
+        // Jika belum ada data pengaturan (Inisialisasi awal sistem)
         if (!$pengaturan) {
             $pengaturan = Pengaturan::create([
                 'nama_sekolah' => 'SMK 4 LPPM RI Padalarang',
@@ -27,6 +27,7 @@ class PengaturanController extends Controller
                 'tahun_ajaran' => '2025/2026 Ganjil',
                 'jam_masuk' => '07:00',
                 'batas_terlambat' => '07:15',
+                'jam_pulang' => '16:00', // FIX: Tambahan nilai default jam pulang sekolah
                 'hari_kerja' => [
                     'Senin',
                     'Selasa',
@@ -88,16 +89,20 @@ class PengaturanController extends Controller
      */
     public function updateAturan(Request $request)
     {
+        // FIX: Tambahkan 'jam_pulang' ke dalam aturan validasi
         $request->validate([
             'jam_masuk' => 'required',
             'batas_terlambat' => 'required',
+            'jam_pulang' => 'required', 
         ]);
 
         $pengaturan = Pengaturan::first();
 
+        // FIX: Masukkan '$request->jam_pulang' agar tersimpan secara dinamis ke database
         $pengaturan->update([
             'jam_masuk' => $request->jam_masuk,
             'batas_terlambat' => $request->batas_terlambat,
+            'jam_pulang' => $request->jam_pulang, 
             'hari_kerja' => $request->hari_kerja ?? [],
             'is_maintenance' => $request->has('is_maintenance'),
         ]);
@@ -151,4 +156,5 @@ class PengaturanController extends Controller
             'success',
             '✅ Fitur backup database sedang dikembangkan!'
         );
-    }};
+    }
+}

@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PengaturanController;
 use App\Http\Controllers\Admin\PresensiAdminController;
 use App\Http\Controllers\Admin\SiswaController;
 use App\Http\Controllers\Admin\WaliSiswaController; 
+use App\Http\Controllers\WaliController; 
 use App\Http\Controllers\Admin\PlotMengajarController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Siswa\PresensiController as SiswaPresensiController; 
@@ -160,4 +161,17 @@ Route::get('/get-mapel-by-kelas', [\App\Http\Controllers\Admin\PlotMengajarContr
 
     Route::get('/pengaturan/backup', [PengaturanController::class, 'backup'])
         ->name('admin.pengaturan.backup');
+});
+
+// AREA GRUP RUTE WALI SISWA (Hanya gunakan yang ini)
+Route::middleware(['auth:wali'])->prefix('wali')->name('wali.')->group(function () {
+        
+    Route::get('/dashboard',            [WaliController::class, 'dashboard'])->name('dashboard');
+    Route::get('/riwayat-kehadiran',    [WaliController::class, 'riwayatKehadiran'])->name('riwayat-kehadiran');
+    Route::get('/notifikasi',           [WaliController::class, 'notifikasi'])->name('notifikasi');
+    Route::get('/profil',               [WaliController::class, 'profil'])->name('profil');
+    Route::put('/profil',               [WaliController::class, 'updateProfil'])->name('profil.update');
+    Route::put('/profil/ganti-password', [WaliController::class, 'gantiPassword'])->name('profil.ganti-password');
+    Route::post('/logout',              [WaliController::class, 'logout'])->name('logout');
+    
 });

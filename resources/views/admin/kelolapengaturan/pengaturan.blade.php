@@ -179,16 +179,13 @@
     @if($errors->any())
         <div class="alert alert-danger border-0 shadow-sm mb-4 py-3 small"
              style="border-radius: 10px; background-color: #fef2f2; color: #991b1b;">
-
             <i class="fas fa-exclamation-circle me-1"></i>
             <strong>Ada kesalahan saat menyimpan!</strong>
-
             <ul class="mb-0 mt-2 ps-3">
                 @foreach($errors->all() as $error)
                     <li style="font-size: 0.85rem;">{{ $error }}</li>
                 @endforeach
             </ul>
-
         </div>
     @endif
 
@@ -196,7 +193,6 @@
 
         {{-- CARD IDENTITAS SEKOLAH --}}
         <div class="card bg-white border-0 shadow-sm p-4" style="border-radius: 15px;">
-
             <h3>
                 <i class="fas fa-school me-2"></i>
                 Identitas Sekolah
@@ -205,13 +201,11 @@
             <form action="{{ route('admin.pengaturan.identitas') }}"
                   method="POST"
                   enctype="multipart/form-data">
-
                 @csrf
                 @method('PUT')
 
                 <div class="form-group">
                     <label>Nama Sekolah</label>
-
                     <input type="text"
                            name="nama_sekolah"
                            value="{{ old('nama_sekolah', $pengaturan->nama_sekolah) }}"
@@ -220,7 +214,6 @@
 
                 <div class="form-group">
                     <label>NPSN</label>
-
                     <input type="text"
                            name="npsn"
                            value="{{ old('npsn', $pengaturan->npsn) }}"
@@ -229,7 +222,6 @@
 
                 <div class="form-group">
                     <label>Nama Kepala Sekolah</label>
-
                     <input type="text"
                            name="nama_kepsek"
                            value="{{ old('nama_kepsek', $pengaturan->nama_kepsek) }}"
@@ -238,7 +230,6 @@
 
                 <div class="form-group">
                     <label>Upload Logo Sekolah</label>
-
                     <input type="file"
                            name="logo_sekolah"
                            accept="image/*"
@@ -248,9 +239,7 @@
                     @if($pengaturan->logo_sekolah)
                         <small class="text-muted d-block mt-2">
                             <i class="fas fa-image me-1"></i>
-
                             Logo saat ini:
-
                             <a href="{{ asset('storage/' . $pengaturan->logo_sekolah) }}"
                                target="_blank">
                                 Lihat File
@@ -261,32 +250,26 @@
 
                 <div class="form-group">
                     <label>Tahun Ajaran Aktif</label>
-
                     <select name="tahun_ajaran">
-
                         <option value="2025/2026 Ganjil"
                             {{ old('tahun_ajaran', $pengaturan->tahun_ajaran) == '2025/2026 Ganjil' ? 'selected' : '' }}>
                             2025/2026 Ganjil
                         </option>
-
                         <option value="2025/2026 Genap"
                             {{ old('tahun_ajaran', $pengaturan->tahun_ajaran) == '2025/2026 Genap' ? 'selected' : '' }}>
                             2025/2026 Genap
                         </option>
-
                     </select>
                 </div>
 
                 <button type="submit" class="btn-save shadow-sm">
                     Simpan Identitas
                 </button>
-
             </form>
         </div>
 
         {{-- CARD ATURAN PRESENSI --}}
         <div class="card bg-white border-0 shadow-sm p-4" style="border-radius: 15px;">
-
             <h3>
                 <i class="fas fa-clock me-2"></i>
                 Aturan Presensi
@@ -294,13 +277,11 @@
 
             <form action="{{ route('admin.pengaturan.aturan') }}"
                   method="POST">
-
                 @csrf
                 @method('PUT')
 
                 <div class="form-group">
                     <label>Jam Masuk (Mulai)</label>
-
                     <input type="time"
                            name="jam_masuk"
                            value="{{ old('jam_masuk', $pengaturan->jam_masuk) }}"
@@ -309,11 +290,23 @@
 
                 <div class="form-group">
                     <label>Batas Terlambat</label>
-
                     <input type="time"
                            name="batas_terlambat"
                            value="{{ old('batas_terlambat', $pengaturan->batas_terlambat) }}"
                            required>
+                </div>
+
+                {{-- FIX: PENAMBAHAN INPUT JAM PULANG SEKOLAH SECARA DINAMIS --}}
+                <div class="form-group">
+                    <label>Jam Pulang Sekolah (KBM Selesai)</label>
+                    <input type="time"
+                           name="jam_pulang"
+                           value="{{ old('jam_pulang', $pengaturan->jam_pulang) }}"
+                           required>
+                    <small class="text-muted d-block mt-1" style="font-size: 0.75rem; line-height: 1.3;">
+                        <i class="fas fa-info-circle text-primary me-1"></i>
+                        Acuan utama jam berakhirnya KBM untuk memicu fungsi sistem Auto-Alpha.
+                    </small>
                 </div>
 
                 @php
@@ -325,56 +318,40 @@
 
                 <div class="form-group">
                     <label>Hari Kerja Aktif</label>
-
                     <div class="days-list">
-
                         @foreach(['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'] as $hari)
-
                             <label class="day-item">
-
                                 <input type="checkbox"
                                        name="hari_kerja[]"
                                        value="{{ $hari }}"
                                        {{ in_array($hari, $hariAktif) ? 'checked' : '' }}>
-
                                 {{ $hari }}
-
                             </label>
-
                         @endforeach
-
                     </div>
                 </div>
 
                 <div class="toggle-group mt-4">
-
                     <span class="small fw-semibold text-dark">
                         Mode Maintenance Sistem
                     </span>
-
                     <label class="switch">
-
                         <input type="checkbox"
                                name="is_maintenance"
                                value="1"
                                {{ $pengaturan->is_maintenance ? 'checked' : '' }}>
-
                         <span class="slider"></span>
-
                     </label>
-
                 </div>
 
                 <button type="submit" class="btn-save shadow-sm">
                     Update Aturan
                 </button>
-
             </form>
         </div>
 
         {{-- CARD KEAMANAN --}}
         <div class="card bg-white border-0 shadow-sm p-4" style="border-radius: 15px;">
-
             <h3>
                 <i class="fas fa-user-shield me-2"></i>
                 Akun & Keamanan
@@ -382,13 +359,11 @@
 
             <form action="{{ route('admin.pengaturan.keamanan') }}"
                   method="POST">
-
                 @csrf
                 @method('PUT')
 
                 <div class="form-group">
                     <label>Username Admin</label>
-
                     <input type="text"
                            name="username"
                            value="{{ old('username', Auth::guard('admin')->user()->username) }}"
@@ -397,7 +372,6 @@
 
                 <div class="form-group">
                     <label>Password Baru</label>
-
                     <input type="password"
                            name="password"
                            placeholder="Kosongkan jika tidak diubah">
@@ -405,61 +379,43 @@
 
                 <div class="form-group">
                     <label>Konfirmasi Password</label>
-
                     <input type="password"
                            name="password_confirmation"
                            placeholder="Ulangi password baru">
                 </div>
 
                 <div class="toggle-group">
-
                     <div style="font-size: 0.85em; font-weight: 600;">
-
                         Batas 1 Device per Siswa
-
                         <p style="font-weight: 400; font-size: 0.8em; color: #64748b; margin-bottom: 0;">
                             Mencegah titip absen / tukar akun.
                         </p>
-
                     </div>
-
                     <label class="switch">
-
                         <input type="checkbox"
                                name="lock_device"
                                value="1"
                                {{ $pengaturan->lock_device ? 'checked' : '' }}>
-
                         <span class="slider"></span>
-
                     </label>
-
                 </div>
 
                 <div style="margin-top: 25px;">
-
                     <label style="font-size: 0.85em; font-weight: 600; color: #64748b;">
                         Maintenance Data
                     </label>
-
                     <a href="{{ route('admin.pengaturan.backup') }}"
                        class="btn-backup shadow-sm text-white">
-
                         <i class="fas fa-database me-1"></i>
                         Backup Database (.sql)
-
                     </a>
-
                 </div>
 
                 <button type="submit"
                         class="btn-save"
                         style="margin-top: 20px;">
-
                     Simpan Perubahan Akun
-
                 </button>
-
             </form>
         </div>
 

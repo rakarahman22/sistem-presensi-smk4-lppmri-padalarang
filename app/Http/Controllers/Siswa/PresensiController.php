@@ -28,7 +28,7 @@ class PresensiController extends Controller
 
     // 2. Logika Inti Memproses Ketukan Absen Masuk Siswa
     public function store(Request $request)
-    {
+    { 
         $request->validate([
             'lat_siswa'  => 'required|numeric',
             'long_siswa' => 'required|numeric',
