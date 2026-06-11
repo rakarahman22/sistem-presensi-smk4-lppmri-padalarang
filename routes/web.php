@@ -4,13 +4,18 @@ use App\Http\Controllers\Admin\GeofenceController;
 use App\Http\Controllers\Admin\GuruController;
 use App\Http\Controllers\Admin\KelasController;
 use App\Http\Controllers\Admin\PengaturanController;
+use App\Http\Controllers\Admin\PlotMengajarController;
 use App\Http\Controllers\Admin\PresensiAdminController;
 use App\Http\Controllers\Admin\SiswaController;
-use App\Http\Controllers\Admin\WaliSiswaController; 
-use App\Http\Controllers\WaliController; 
-use App\Http\Controllers\Admin\PlotMengajarController;
+use App\Http\Controllers\Admin\WaliSiswaController;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Siswa\PresensiController as SiswaPresensiController; 
+use App\Http\Controllers\Guru\GuruDashboardController;
+use App\Http\Controllers\Guru\GururDashboardController;
+use App\Http\Controllers\Siswa\PresensiController as SiswaPresensiController;
+use App\Http\Controllers\Siswa\ProfilController;
+use App\Http\Controllers\Siswa\RiwayatPresensiController;
+use App\Http\Controllers\Siswa\SiswaDashboardController;
+use App\Http\Controllers\WaliController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,7 +25,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // GUEST / PUBLIC ROUTES
-Route::get('/', function () { return view('welcome'); });
+Route::get('/', function () {
+    return view('welcome');
+});
 
 Route::get('/login', [AuthController::class, 'pilihLogin'])->name('login');
 Route::get('/login/{type}', [AuthController::class, 'showLoginForm'])->name('login.form');
@@ -33,12 +40,26 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
  * =========================================================================
  */
 Route::prefix('siswa')->middleware('auth:siswa')->group(function () {
-    Route::get('/dashboard', function() { return view('siswa.dashboard'); })->name('siswa.dashboard');
-    Route::get('/presensi', [SiswaPresensiController::class, 'index'])->name('siswa.presensi');
-    Route::post('/presensi/store', [SiswaPresensiController::class, 'store'])->name('siswa.presensi.store');
-    Route::get('/riwayat-presensi', function () { return view('siswa.riwayat-presensi'); });
-    Route::get('/pesan-guru', function () { return view('siswa.pesan-guru'); });
-    Route::get('/profil', function () { return view('siswa.profil'); });
+ 
+    Route::get('/dashboard', [SiswaDashboardController::class, 'index'])
+        ->name('siswa.dashboard');
+ 
+    Route::get('/presensi', [SiswaPresensiController::class, 'index'])
+        ->name('siswa.presensi');
+ 
+    Route::post('/presensi/store', [SiswaPresensiController::class, 'store'])
+        ->name('siswa.presensi.store');
+ 
+    // Halaman riwayat (view)
+    Route::get('/riwayat-presensi', [RiwayatPresensiController::class, 'index'])
+        ->name('siswa.riwayat-presensi');
+ 
+    // Endpoint AJAX untuk filter realtime
+    Route::get('/riwayat-presensi/data', [RiwayatPresensiController::class, 'data'])
+        ->name('siswa.riwayat-presensi.data');
+ 
+        Route::get('/profil',        [ProfilController::class, 'index'])->name('siswa.profil');
+        Route::put('/profil/update', [ProfilController::class, 'update'])->name('siswa.profil.update');
 });
 
 /**
@@ -47,26 +68,39 @@ Route::prefix('siswa')->middleware('auth:siswa')->group(function () {
  * =========================================================================
  */
 Route::middleware(['web', 'auth:guru'])->prefix('guru')->group(function () {
-    Route::get('/dashboard', function() { return view('guru.dashboard'); })->name('guru.dashboard');
-
+    Route::get('/dashboard', [GuruDashboardController::class, 'index'])->name('guru.dashboard');
+ 
+    // =========================================================================
     // FITUR ABSEN PER MATA PELAJARAN (MAPEL)
-    Route::get('/absen-mapel', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'index'])->name('guru.absen-mapel.index');
-    Route::post('/absen-mapel/buka-sesi', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'storeSesi'])->name('guru.absen-mapel.buka-sesi');
-    Route::get('/absen-mapel/isi/{id_mengajar}', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'isiAbsen'])->name('guru.absen-mapel.isi');
-    Route::post('/absen-mapel/simpan/{id_mengajar}', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'updateAbsen'])->name('guru.absen-mapel.simpan');
-
+    // =========================================================================
+    Route::get('/absen-mapel',                      [\App\Http\Controllers\Guru\AbsenMapelController::class, 'index'])       ->name('guru.absen-mapel.index');
+    Route::post('/absen-mapel/buka-sesi',           [\App\Http\Controllers\Guru\AbsenMapelController::class, 'storeSesi'])   ->name('guru.absen-mapel.buka-sesi');
+    Route::get('/absen-mapel/isi/{id_mengajar}',    [\App\Http\Controllers\Guru\AbsenMapelController::class, 'isiAbsen'])    ->name('guru.absen-mapel.isi');
+    Route::post('/absen-mapel/simpan/{id_mengajar}',[\App\Http\Controllers\Guru\AbsenMapelController::class, 'updateAbsen']) ->name('guru.absen-mapel.simpan');
+ 
+    // =========================================================================
     // FITUR REKAP ABSEN PER MATA PELAJARAN (MAPEL)
-    Route::get('/rekap-absen-mapel', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'rekapIndex'])->name('guru.absen-mapel.rekap');
-    Route::get('/rekap-absen-mapel/tampil', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'rekapTampil'])->name('guru.absen-mapel.rekap.tampil');
-
-    // API Cek Pertemuan Absen Mapel
-    Route::get('/absen-mapel/cek-pertemuan', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'cekPertemuanKe'])->name('guru.absen-mapel.cek-pertemuan');
-
     // =========================================================================
-    // FIX: TAMBAHKAN BARIS INI (SINKRONISASI FILTER MAPEL GURU)
+    Route::get('/rekap-absen-mapel',        [\App\Http\Controllers\Guru\AbsenMapelController::class, 'rekapIndex'])  ->name('guru.absen-mapel.rekap');
+    Route::get('/rekap-absen-mapel/tampil', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'rekapTampil']) ->name('guru.absen-mapel.rekap.tampil');
+ 
     // =========================================================================
-    Route::get('/absen-mapel/get-mapel', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'getMapelByKelasGuru'])->name('guru.absen-mapel.get-mapel');
-
+    // API / AJAX ENDPOINTS
+    // =========================================================================
+ 
+    // Cek pertemuan ke-berapa (dipakai di index saat mapel dipilih)
+    Route::get('/absen-mapel/cek-pertemuan',  [\App\Http\Controllers\Guru\AbsenMapelController::class, 'cekPertemuanKe'])     ->name('guru.absen-mapel.cek-pertemuan');
+ 
+    // Cek duplikat sesi hari ini (BARU — warning sebelum buka sesi ganda)
+    Route::get('/absen-mapel/cek-duplikat',   [\App\Http\Controllers\Guru\AbsenMapelController::class, 'cekDuplikatSesi'])    ->name('guru.absen-mapel.cek-duplikat');
+ 
+    // Ambil daftar mapel yang di-plot admin untuk guru ini, difilter per kelas
+    Route::get('/absen-mapel/get-mapel',      [\App\Http\Controllers\Guru\AbsenMapelController::class, 'getMapelByKelasGuru'])->name('guru.absen-mapel.get-mapel');
+ 
+    // Ambil nama-nama mapel (string) yang pernah diajarkan di kelas — untuk filter rekap (BARU)
+    Route::get('/absen-mapel/get-mapel-nama', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'getMapelNamaByKelas'])->name('guru.absen-mapel.get-mapel-nama');
+ 
+    // Tambah master mapel baru via modal AJAX
     Route::post('/absen-mapel/tambah-mapel-ajax', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'tambahMapelAjax'])->name('guru.absen-mapel.tambah-mapel-ajax');
 });
 
@@ -76,7 +110,9 @@ Route::middleware(['web', 'auth:guru'])->prefix('guru')->group(function () {
  * =========================================================================
  */
 Route::middleware('auth:wali')->prefix('wali')->group(function () {
-    Route::get('/dashboard', function() { return view('wali.dashboard'); })->name('wali.dashboard');
+    Route::get('/dashboard', function () {
+        return view('wali.dashboard');
+    })->name('wali.dashboard');
 });
 
 /**
@@ -85,11 +121,13 @@ Route::middleware('auth:wali')->prefix('wali')->group(function () {
  * =========================================================================
  */
 Route::middleware('auth:admin')->prefix('admin')->group(function () {
-    
-    // Halaman Dashboard Utama Admin
-    Route::get('/dashboard', function() { return view('admin.dashboard'); })->name('admin.dashboard');
 
-    
+    // Halaman Dashboard Utama Admin
+    Route::get('/dashboard', function () {
+        return view('admin.dashboard');
+    })->name('admin.dashboard');
+
+
     // CRUD DATA SISWA
     Route::get('/data-siswa', [SiswaController::class, 'index'])->name('admin.siswa');
     Route::get('/data-siswa/create', [SiswaController::class, 'create'])->name('admin.siswa.create');
@@ -129,21 +167,23 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::delete('/data-mapel/{id_mapel}', [\App\Http\Controllers\Admin\MapelController::class, 'destroy'])->name('admin.mapel.destroy');
 
     // CRUD PLOTTING GURU MENGAJAR KELAS & MAPEL
-Route::get('/plot-mengajar', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'index'])->name('admin.plot');
-Route::post('/plot-mengajar', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'store'])->name('admin.plot.store');
-Route::delete('/plot-mengajar/{id_plot}', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'destroy'])->name('admin.plot.destroy');
+    Route::get('/plot-mengajar', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'index'])->name('admin.plot');
+    Route::post('/plot-mengajar', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'store'])->name('admin.plot.store');
+    Route::delete('/plot-mengajar/{id_plot}', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'destroy'])->name('admin.plot.destroy');
 
-// ✅ PERBAIKAN - samakan prefix dan namespace dengan route lainnya
-Route::get('/get-mapel-by-kelas', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'getMapelByKelas'])->name('admin.get.mapel.by.kelas');
+    // ✅ PERBAIKAN - samakan prefix dan namespace dengan route lainnya
+    Route::get('/get-mapel-by-kelas', [\App\Http\Controllers\Admin\PlotMengajarController::class, 'getMapelByKelas'])->name('admin.get.mapel.by.kelas');
 
     // MONITORING PRESENSI SISWA (REALTIME HARI INI)
     Route::get('/presensi-siswa', [PresensiAdminController::class, 'index'])->name('admin.presensi');
     Route::put('/admin/presensi-siswa/{id}/koreksi', [PresensiAdminController::class, 'koreksi'])
-    ->name('admin.presensi.koreksi');
- 
+        ->name('admin.presensi.koreksi');
+
 
     // LAPORAN PRESENSI
-    Route::get('/laporan', function() { return view('admin.laporan'); })->name('admin.laporan');
+    Route::get('/laporan', function () {
+        return view('admin.laporan');
+    })->name('admin.laporan');
 
     // CONFIG GEOFENCING LOKASI SEKOLAH
     Route::get('/pengaturan-lokasi', [GeofenceController::class, 'index'])->name('admin.lokasi');
@@ -168,7 +208,7 @@ Route::get('/get-mapel-by-kelas', [\App\Http\Controllers\Admin\PlotMengajarContr
 
 // AREA GRUP RUTE WALI SISWA (Hanya gunakan yang ini)
 Route::middleware(['auth:wali'])->prefix('wali')->name('wali.')->group(function () {
-        
+
     Route::get('/dashboard',            [WaliController::class, 'dashboard'])->name('dashboard');
     Route::get('/riwayat-kehadiran',    [WaliController::class, 'riwayatKehadiran'])->name('riwayat-kehadiran');
     Route::get('/notifikasi',           [WaliController::class, 'notifikasi'])->name('notifikasi');
@@ -176,5 +216,4 @@ Route::middleware(['auth:wali'])->prefix('wali')->name('wali.')->group(function 
     Route::put('/profil',               [WaliController::class, 'updateProfil'])->name('profil.update');
     Route::put('/profil/ganti-password', [WaliController::class, 'gantiPassword'])->name('profil.ganti-password');
     Route::post('/logout',              [WaliController::class, 'logout'])->name('logout');
-    
 });

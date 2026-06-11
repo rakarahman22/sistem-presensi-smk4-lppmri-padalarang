@@ -128,10 +128,6 @@
                     class="nav-link-custom {{ request()->is('siswa/riwayat-presensi') ? 'active' : '' }}">
                     <i class="bi bi-clock-history"></i> Riwayat Presensi
                 </a>
-                <a href="/siswa/pesan-guru"
-                    class="nav-link-custom {{ request()->is('siswa/pesan-guru') ? 'active' : '' }}">
-                    <i class="bi bi-chat-dots-fill"></i> Pesan Guru
-                </a>
                 <a href="/siswa/profil" class="nav-link-custom {{ request()->is('siswa/profil') ? 'active' : '' }}">
                     <i class="bi bi-person-circle"></i> Profil
                 </a>
