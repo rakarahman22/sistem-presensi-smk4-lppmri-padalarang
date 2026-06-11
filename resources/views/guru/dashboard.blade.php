@@ -8,14 +8,13 @@
     {{-- ══════════════════════════════════════════
          HEADER SELAMAT DATANG
     ══════════════════════════════════════════ --}}
-    <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 15px; background: linear-gradient(135deg, #1a3a5c 0%, #1e40af 100%);">
+    <div class="card border-0 shadow-sm p-4 mb-4" style="border-radius: 15px; background: linear-gradient(135deg, #145f15 0%, #22b508 100%);">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
             <div>
                 <p class="text-white-50 small mb-1 fw-semibold text-uppercase letter-spacing-1">Selamat Datang</p>
                 <h4 class="fw-bold text-white mb-1">{{ $guru->nama_guru }} 👋</h4>
                 <p class="text-white-50 mb-0 small">
                     NIP: {{ $guru->nip }} &nbsp;|&nbsp;
-                    <span class="badge bg-white bg-opacity-20 text-white border border-white border-opacity-25 px-2 py-1" style="border-radius:6px; font-weight:600;">
                         <i class="bi bi-person-badge-fill me-1"></i>Tenaga Pengajar
                     </span>
                 </p>
@@ -232,11 +231,6 @@
                            class="btn fw-semibold text-start py-3 px-3"
                            style="background:#faf5ff; color:#7c3aed; border:1px solid #ddd6fe; border-radius:10px;">
                             <i class="bi bi-check2-square me-2"></i>Validasi Kehadiran
-                        </a>
-                        <a href="#"
-                           class="btn fw-semibold text-start py-3 px-3"
-                           style="background:#f0f9ff; color:#0891b2; border:1px solid #bae6fd; border-radius:10px;">
-                            <i class="bi bi-eye-fill me-2"></i>Monitoring Geofence
                         </a>
                     </div>
                 </div>

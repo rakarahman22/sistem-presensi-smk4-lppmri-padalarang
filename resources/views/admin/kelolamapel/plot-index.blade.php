@@ -35,8 +35,15 @@
                         <label class="form-label fw-semibold small">Pilih Kelas</label>
                         <select name="id_kelas" id="selectKelas" class="form-select" required>
                             <option value="">-- Pilih Kelas --</option>
-                            @foreach($daftarKelas as $kelas)
-                                <option value="{{ $kelas->id_kelas }}">{{ $kelas->tingkat }} {{ $kelas->nama_kelas }} ({{ $kelas->jurusan }})</option>
+                        
+                            @foreach($daftarKelas->groupBy('tingkat') as $tingkat => $kelasGroup)
+                                <optgroup label="Kelas {{ $tingkat }}">
+                                    @foreach($kelasGroup as $kelas)
+                                        <option value="{{ $kelas->id_kelas }}">
+                                            {{ $kelas->nama_kelas }} ({{ $kelas->jurusan }})
+                                        </option>
+                                    @endforeach
+                                </optgroup>
                             @endforeach
                         </select>
                     </div>

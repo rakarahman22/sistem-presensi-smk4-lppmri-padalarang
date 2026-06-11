@@ -128,6 +128,10 @@
                     class="nav-link-custom {{ request()->is('siswa/riwayat-presensi') ? 'active' : '' }}">
                     <i class="bi bi-clock-history"></i> Riwayat Presensi
                 </a>
+                <a href="/siswa/riwayat-absen-mapel"
+                    class="nav-link-custom {{ request()->is('siswa/riwayat-absen-mapel') ? 'active' : '' }}">
+                    <i class="bi bi-journal-check"></i> Absensi Mapel
+                </a>
                 <a href="/siswa/profil" class="nav-link-custom {{ request()->is('siswa/profil') ? 'active' : '' }}">
                     <i class="bi bi-person-circle"></i> Profil
                 </a>
