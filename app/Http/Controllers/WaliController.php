@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Presensi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -74,35 +75,58 @@ class WaliController extends Controller
         $tglDari   = $request->input('tgl_dari')   ?: null;
         $tglSampai = $request->input('tgl_sampai') ?: null;
 
-        // ── Ambil data presensi ───────────────────────────────
-        $riwayat = collect();
+        // ── Tentukan id_siswa mana saja yang boleh diakses wali ini ──
+        $idSiswaList = $siswaList->pluck('id_siswa');
 
-        foreach ($siswaList as $siswa) {
-            if ($idSiswaFilter && $siswa->id_siswa != $idSiswaFilter) continue;
-
-            $query = $siswa->presensi();
-
-            // Prioritaskan filter tanggal spesifik jika keduanya diisi
-            if ($tglDari && $tglSampai) {
-                $query->whereBetween('tgl_presensi', [$tglDari, $tglSampai]);
-            } else {
-                $query->whereMonth('tgl_presensi', $bulan)
-                      ->whereYear('tgl_presensi', $tahun);
-            }
-
-            $presensi = $query
-                ->orderBy('tgl_presensi', 'desc')
-                ->get()
-                ->map(function ($p) use ($siswa) {
-                    $p->nama_siswa = $siswa->nama_siswa;
-                    $p->kelas      = $siswa->kelas->nama_kelas ?? '-';
-                    return $p;
-                });
-
-            $riwayat = $riwayat->merge($presensi);
+        // Kalau filter nama anak diisi, pastikan id tersebut memang milik wali ini
+        if ($idSiswaFilter && $idSiswaList->contains($idSiswaFilter)) {
+            $idSiswaIds = [$idSiswaFilter];
+        } else {
+            // Kalau id_siswa tidak valid / tidak diisi, gunakan semua anak milik wali
+            $idSiswaFilter = $idSiswaFilter && $idSiswaList->contains($idSiswaFilter) ? $idSiswaFilter : ($idSiswaFilter ?: null);
+            $idSiswaIds    = $idSiswaList->all();
         }
 
-        $riwayat = $riwayat->sortByDesc('tgl_presensi')->values();
+        // ── Base query (belum di-get / paginate) ──────────────
+        $baseQuery = Presensi::query()
+            ->with('siswa.kelas')
+            ->whereIn('id_siswa', $idSiswaIds)
+            ->when($tglDari && $tglSampai, function ($q) use ($tglDari, $tglSampai) {
+                $q->whereBetween('tgl_presensi', [$tglDari, $tglSampai]);
+            })
+            ->when(!($tglDari && $tglSampai), function ($q) use ($bulan, $tahun) {
+                $q->whereMonth('tgl_presensi', $bulan)
+                  ->whereYear('tgl_presensi', $tahun);
+            });
+
+        // ── Rekap dihitung dari SELURUH data periode (clone, tanpa pagination) ──
+        $rekapData = (clone $baseQuery)->get();
+
+        $cHadir     = $rekapData->where('status', 'Hadir')->count();
+        $cTerlambat = $rekapData->where('status', 'Terlambat')->count();
+        $cSakit     = $rekapData->where('status', 'Sakit')->count();
+        $cIzin      = $rekapData->where('status', 'Izin')->count();
+        $cAlpha     = $rekapData->whereIn('status', ['Alpa', 'Alpha'])->count();
+
+        $totalHari  = $rekapData->count();
+        $persentase = $totalHari > 0 ? round((($cHadir + $cTerlambat) / $totalHari) * 100) : 0;
+
+        // ── Data tabel: pagination, terbaru dulu ──────────────
+        $perPage = in_array((int) $request->input('per_page'), [10, 20, 50])
+            ? (int) $request->input('per_page')
+            : 15;
+
+        $riwayat = (clone $baseQuery)
+            ->orderBy('tgl_presensi', 'desc')
+            ->paginate($perPage)
+            ->withQueryString();
+
+        // ── Tambahkan nama_siswa & kelas ke setiap item (dipakai view) ──
+        $riwayat->getCollection()->transform(function ($p) {
+            $p->nama_siswa = $p->siswa->nama_siswa ?? '-';
+            $p->kelas      = $p->siswa->kelas->nama_kelas ?? '-';
+            return $p;
+        });
 
         $this->shareSidebarData($wali);
 
@@ -113,8 +137,16 @@ class WaliController extends Controller
             'bulan',
             'tahun',
             'idSiswaFilter',
-            'tglDari',       // <-- BARU, dibutuhkan view untuk toggle filter & label progress bar
-            'tglSampai'      // <-- BARU
+            'tglDari',
+            'tglSampai',
+            'perPage',
+            'cHadir',
+            'cTerlambat',
+            'cSakit',
+            'cIzin',
+            'cAlpha',
+            'totalHari',
+            'persentase',
         ));
     }
 

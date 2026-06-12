@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Data Kelas - SMK 4 LPPM RI Padalarang')
+@section('title', 'Data Kelas')
 
 @section('content')
 
@@ -10,7 +10,7 @@
             <i class="bi bi-collection-fill me-2"></i>Data Kelas
         </h4>
         <p class="text-muted small mb-0 mt-1">
-            Total <strong>{{ $kelases->count() }}</strong> kelas terdaftar
+            Total <strong>{{ $kelases->total() }}</strong> kelas terdaftar
         </p>
     </div>
     <a href="{{ route('admin.kelas.create') }}"
@@ -29,51 +29,89 @@
 
 <div class="card border-0 shadow-sm p-4" style="border-radius:20px;">
 
-    {{-- ── TOOLBAR ── --}}
-    <div class="row g-2 mb-3 align-items-end">
-        <div class="col-6 col-md-3">
-            <label class="form-label fw-semibold small mb-1 text-muted">Filter Tingkat</label>
-            <select id="filterTingkat" class="form-select" style="border-radius:10px;">
-                <option value="">Semua Tingkat</option>
-                @foreach($kelases->pluck('tingkat')->unique()->sort() as $t)
-                    <option value="{{ strtolower($t) }}">{{ $t }}</option>
-                @endforeach
-            </select>
+    <form method="GET" action="{{ route('admin.kelas') }}">
+        <div class="row g-2 mb-3 align-items-end">
+
+            <div class="col-6 col-md-2">
+                <label class="form-label fw-semibold small mb-1 text-muted">Tingkat</label>
+                <select name="tingkat" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    @foreach($tingkat_list as $t)
+                        <option value="{{ $t }}" {{ request('tingkat') == $t ? 'selected' : '' }}>
+                            {{ $t }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small mb-1 text-muted">Jurusan</label>
+                <select name="jurusan" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    <option value="">Semua Jurusan</option>
+                    @foreach($jurusan_list as $j)
+                        <option value="{{ $j }}" {{ request('jurusan') == $j ? 'selected' : '' }}>
+                            {{ $j }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-6 col-md-2">
+                <label class="form-label fw-semibold small mb-1 text-muted">Wali Kelas</label>
+                <select name="status_wali" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    <option value="ada" {{ request('status_wali') == 'ada' ? 'selected' : '' }}>
+                        Sudah ada
+                    </option>
+                    <option value="belum" {{ request('status_wali') == 'belum' ? 'selected' : '' }}>
+                        Belum ada
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-4 col-md-1">
+                <label class="form-label fw-semibold small mb-1 text-muted">Tampilkan</label>
+                <select name="per_page" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    @foreach([10, 25, 50, 100, 500] as $n)
+                        <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-4 col-md-1">
+                <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
+                <button type="submit" class="btn btn-primary w-100" style="border-radius:10px;">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+
+            <div class="col-4 col-md-1">
+                <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
+                <a href="{{ route('admin.kelas') }}" class="btn btn-outline-secondary w-100"
+                   style="border-radius:10px;" title="Reset">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+
         </div>
-        <div class="col-6 col-md-4">
-            <label class="form-label fw-semibold small mb-1 text-muted">Filter Jurusan</label>
-            <select id="filterJurusan" class="form-select" style="border-radius:10px;">
-                <option value="">Semua Jurusan</option>
-                @foreach($kelases->pluck('jurusan')->unique()->sort() as $j)
-                    <option value="{{ strtolower($j) }}">{{ $j }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="col-4 col-md-2">
-            <label class="form-label fw-semibold small mb-1 text-muted">Wali Kelas</label>
-            <select id="filterWali" class="form-select" style="border-radius:10px;">
-                <option value="">Semua</option>
-                <option value="ada">Sudah ada</option>
-                <option value="belum">Belum ada</option>
-            </select>
-        </div>
-        <div class="col-4 col-md-1">
-            <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
-            <button id="btnReset" class="btn btn-outline-secondary w-100"
-                    style="border-radius:10px;" title="Reset">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="col-4 col-md-2 d-flex align-items-end justify-content-end">
-            <p class="text-muted small mb-0">
-                <strong id="jumlahTampil">{{ $kelases->count() }}</strong> kelas
-            </p>
-        </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <p class="text-muted small mb-0">
+            Menampilkan <strong>{{ $kelases->firstItem() ?? 0 }}</strong>–<strong>{{ $kelases->lastItem() ?? 0 }}</strong>
+            dari <strong>{{ $kelases->total() }}</strong> kelas
+        </p>
+        <p class="text-muted small mb-0">
+            Halaman {{ $kelases->currentPage() }} dari {{ $kelases->lastPage() }}
+        </p>
     </div>
 
-    {{-- ── TABEL ── --}}
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="tabelKelas" style="font-size:0.93rem;">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.93rem;">
             <thead class="table-light text-muted fw-semibold">
                 <tr>
                     <th class="ps-3" style="width:55px;">No</th>
@@ -81,30 +119,23 @@
                     <th>Tingkat</th>
                     <th>Jurusan</th>
                     <th>Wali Kelas</th>
-                    <th class="text-center" style="width:120px;">Jumlah Siswa</th>
+                    <th class="text-center" style="width:130px;">Jumlah Siswa</th>
                     <th class="text-center" style="width:130px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($kelases as $i => $kelas)
                     @php $jumlahSiswa = $kelas->siswa->count(); @endphp
-                    <tr class="baris-kelas"
-                        data-tingkat="{{ strtolower($kelas->tingkat) }}"
-                        data-jurusan="{{ strtolower($kelas->jurusan) }}"
-                        data-wali="{{ $kelas->waliKelas ? 'ada' : 'belum' }}">
-
-                        <td class="ps-3 text-muted fw-medium nomor-urut">{{ $i + 1 }}</td>
-
+                    <tr>
+                        <td class="ps-3 text-muted fw-medium">{{ $kelases->firstItem() + $i }}</td>
                         <td>
                             <span class="badge bg-success px-2 py-1"
                                   style="border-radius:6px; background:#15803d !important; font-weight:600;">
                                 {{ $kelas->tingkat }} {{ $kelas->nama_kelas }}
                             </span>
                         </td>
-
                         <td class="text-muted fw-medium">{{ $kelas->tingkat }}</td>
                         <td class="fw-semibold text-dark">{{ $kelas->jurusan }}</td>
-
                         <td>
                             @if($kelas->waliKelas)
                                 <span class="text-dark fw-medium small">
@@ -117,17 +148,14 @@
                                 </span>
                             @endif
                         </td>
-
                         <td class="text-center">
                             <span class="badge {{ $jumlahSiswa > 0 ? 'bg-primary-subtle text-primary border border-primary-subtle' : 'bg-secondary-subtle text-secondary border' }}"
                                   style="border-radius:6px; font-weight:600; min-width:60px;">
                                 {{ $jumlahSiswa }} siswa
                             </span>
                         </td>
-
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
-                                {{-- Lihat Siswa — sekarang filter by kelas --}}
                                 <a href="{{ route('admin.siswa') }}?id_kelas={{ $kelas->id_kelas }}"
                                    class="btn btn-sm btn-light text-success"
                                    style="border-radius:8px;" title="Lihat Siswa Kelas Ini">
@@ -135,16 +163,15 @@
                                 </a>
                                 <a href="{{ route('admin.kelas.edit', $kelas->id_kelas) }}"
                                    class="btn btn-sm btn-light text-primary"
-                                   style="border-radius:8px;" title="Edit Kelas">
+                                   style="border-radius:8px;" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
                                 <form action="{{ route('admin.kelas.destroy', $kelas->id_kelas) }}"
                                       method="POST"
-                                      onsubmit="return confirm('Hapus kelas {{ addslashes($kelas->tingkat . ' ' . $kelas->nama_kelas) }}?\nSemua siswa di kelas ini akan kehilangan kelasnya.')">
+                                      onsubmit="return confirm('Hapus kelas {{ addslashes($kelas->tingkat . ' ' . $kelas->nama_kelas) }}?')">
                                     @csrf @method('DELETE')
-                                    <button type="submit"
-                                            class="btn btn-sm btn-light text-danger"
-                                            style="border-radius:8px;" title="Hapus Kelas">
+                                    <button type="submit" class="btn btn-sm btn-light text-danger"
+                                            style="border-radius:8px;" title="Hapus">
                                         <i class="bi bi-trash3-fill"></i>
                                     </button>
                                 </form>
@@ -155,21 +182,22 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-5">
                             <i class="bi bi-folder-x display-6 d-block mb-2 text-secondary"></i>
-                            Belum ada data kelas terdaftar.
+                            Tidak ada data kelas yang ditemukan.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-
-        <div id="emptyFilter" class="text-center text-muted py-5 d-none">
-            <i class="bi bi-search display-6 d-block mb-2 text-secondary"></i>
-            <p class="mb-0">Tidak ada kelas yang cocok dengan filter.</p>
-            <button class="btn btn-sm btn-outline-secondary mt-2" id="btnResetEmpty"
-                    style="border-radius:8px;">Reset Filter</button>
-        </div>
     </div>
+
+    @if($kelases->hasPages())
+        <div class="d-flex justify-content-center mt-3">
+            {{ $kelases->links() }}
+        </div>
+    @endif
+
 </div>
+@endsection
 
 @push('styles')
 <style>
@@ -177,56 +205,3 @@
     .table-hover > tbody > tr:hover > * { background-color: #f8fafc; }
 </style>
 @endpush
-
-@push('scripts')
-<script>
-(function () {
-    const filterTingkat = document.getElementById('filterTingkat');
-    const filterJurusan = document.getElementById('filterJurusan');
-    const filterWali    = document.getElementById('filterWali');
-    const btnReset      = document.getElementById('btnReset');
-    const btnResetEmpty = document.getElementById('btnResetEmpty');
-    const jumlahTampil  = document.getElementById('jumlahTampil');
-    const emptyFilter   = document.getElementById('emptyFilter');
-    const tbody         = document.querySelector('#tabelKelas tbody');
-
-    function filter() {
-        const tingkat = filterTingkat.value;
-        const jurusan = filterJurusan.value;
-        const wali    = filterWali.value;
-        const baris   = tbody.querySelectorAll('tr.baris-kelas');
-        let tampil    = 0;
-
-        baris.forEach(tr => {
-            const ok = (!tingkat || tr.dataset.tingkat === tingkat)
-                    && (!jurusan || tr.dataset.jurusan === jurusan)
-                    && (!wali    || tr.dataset.wali    === wali);
-
-            tr.style.display = ok ? '' : 'none';
-            if (ok) {
-                tampil++;
-                tr.querySelector('.nomor-urut').textContent = tampil;
-            }
-        });
-
-        jumlahTampil.textContent = tampil;
-        emptyFilter.classList.toggle('d-none', baris.length === 0 || tampil > 0);
-    }
-
-    function reset() {
-        filterTingkat.value = '';
-        filterJurusan.value = '';
-        filterWali.value    = '';
-        filter();
-    }
-
-    filterTingkat.addEventListener('change', filter);
-    filterJurusan.addEventListener('change', filter);
-    filterWali.addEventListener('change',    filter);
-    btnReset.addEventListener('click',       reset);
-    btnResetEmpty.addEventListener('click',  reset);
-})();
-</script>
-@endpush
-
-@endsection

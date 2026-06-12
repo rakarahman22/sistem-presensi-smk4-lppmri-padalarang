@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Data Wali Siswa - SMK 4 LPPM RI Padalarang')
+@section('title', 'Data Wali Siswa')
 
 @section('content')
 
@@ -10,7 +10,7 @@
             <i class="bi bi-people-fill me-2"></i>Data Wali Siswa
         </h4>
         <p class="text-muted small mb-0 mt-1">
-            Total <strong>{{ $walis->count() }}</strong> wali terdaftar
+            Total <strong>{{ $walis->total() }}</strong> wali terdaftar
         </p>
     </div>
     <a href="{{ route('admin.wali.create') }}"
@@ -29,97 +29,109 @@
 
 <div class="card border-0 shadow-sm p-4" style="border-radius:20px;">
 
-    {{-- ── TOOLBAR ── --}}
-    <div class="row g-2 mb-3 align-items-end">
+    <form method="GET" action="{{ route('admin.wali') }}">
+        <div class="row g-2 mb-3 align-items-end">
 
-        {{-- Search --}}
-        <div class="col-12 col-md-4">
-            <label class="form-label fw-semibold small mb-1 text-muted">Cari Wali Siswa</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted">
-                    <i class="bi bi-search"></i>
-                </span>
-                <input type="text" id="inputCari"
-                       class="form-control bg-light border-start-0"
-                       placeholder="Nama, username, atau no. telp..."
-                       style="border-radius:0 10px 10px 0;">
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold small mb-1 text-muted">Cari Wali Siswa</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="cari" value="{{ request('cari') }}"
+                           class="form-control bg-light border-start-0"
+                           placeholder="Nama, username, atau no. telp..."
+                           style="border-radius:0 10px 10px 0;">
+                </div>
             </div>
-        </div>
 
-        {{-- Filter punya anak / tidak --}}
-        <div class="col-6 col-md-3">
-            <label class="form-label fw-semibold small mb-1 text-muted">Status Siswa</label>
-            <select id="filterStatus" class="form-select" style="border-radius:10px;">
-                <option value="">Semua</option>
-                <option value="punya">Sudah punya siswa</option>
-                <option value="belum">Belum punya siswa</option>
-            </select>
-        </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small mb-1 text-muted">Status Siswa</label>
+                <select name="status_siswa" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    <option value="punya" {{ request('status_siswa') == 'punya' ? 'selected' : '' }}>
+                        Sudah punya siswa
+                    </option>
+                    <option value="belum" {{ request('status_siswa') == 'belum' ? 'selected' : '' }}>
+                        Belum punya siswa
+                    </option>
+                </select>
+            </div>
 
-        {{-- Reset --}}
-        <div class="col-6 col-md-1">
-            <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
-            <button id="btnReset" class="btn btn-outline-secondary w-100"
-                    style="border-radius:10px;" title="Reset filter">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
+            <div class="col-4 col-md-1">
+                <label class="form-label fw-semibold small mb-1 text-muted">Tampilkan</label>
+                <select name="per_page" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    @foreach([10, 25, 50, 100, 500] as $n)
+                        <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
+                    @endforeach
+                </select>
+            </div>
 
-        {{-- Counter --}}
-        <div class="col-12 col-md-4 d-flex align-items-end justify-content-md-end">
-            <p class="text-muted small mb-0">
-                Menampilkan <strong id="jumlahTampil">{{ $walis->count() }}</strong> wali
-            </p>
-        </div>
+            <div class="col-4 col-md-1">
+                <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
+                <button type="submit" class="btn btn-primary w-100" style="border-radius:10px;">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
 
+            <div class="col-4 col-md-1">
+                <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
+                <a href="{{ route('admin.wali') }}" class="btn btn-outline-secondary w-100"
+                   style="border-radius:10px;" title="Reset">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+
+        </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <p class="text-muted small mb-0">
+            Menampilkan <strong>{{ $walis->firstItem() ?? 0 }}</strong>–<strong>{{ $walis->lastItem() ?? 0 }}</strong>
+            dari <strong>{{ $walis->total() }}</strong> wali
+        </p>
+        <p class="text-muted small mb-0">
+            Halaman {{ $walis->currentPage() }} dari {{ $walis->lastPage() }}
+        </p>
     </div>
 
-    {{-- ── TABEL ── --}}
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="tabelWali" style="font-size:0.93rem;">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.93rem;">
             <thead class="table-light text-muted fw-semibold">
                 <tr>
                     <th class="ps-3" style="width:55px;">No</th>
                     <th>Nama Wali</th>
                     <th>Username</th>
                     <th>No. Telepon</th>
-                    <th class="text-center" style="width:130px;">Siswa Terdaftar</th>
-                    <th class="text-center" style="width:110px;">Aksi</th>
+                    <th class="text-center" style="width:140px;">Siswa Terdaftar</th>
+                    <th class="text-center" style="width:100px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($walis as $i => $wali)
                     @php $jumlahSiswa = $wali->siswa->count(); @endphp
-                    <tr class="baris-wali"
-                        data-nama="{{ strtolower($wali->nama_wali) }}"
-                        data-username="{{ strtolower($wali->username) }}"
-                        data-telp="{{ $wali->no_telp }}"
-                        data-punya="{{ $jumlahSiswa > 0 ? 'punya' : 'belum' }}">
-
-                        <td class="ps-3 text-muted fw-medium nomor-urut">{{ $i + 1 }}</td>
-
+                    <tr>
+                        <td class="ps-3 text-muted fw-medium">{{ $walis->firstItem() + $i }}</td>
                         <td class="fw-semibold text-dark">{{ $wali->nama_wali }}</td>
-
                         <td>
                             <span class="badge bg-light text-secondary border px-2 py-1"
                                   style="border-radius:6px;">
                                 {{ $wali->username }}
                             </span>
                         </td>
-
                         <td class="text-muted">
                             @if($wali->no_telp)
                                 <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', $wali->no_telp) }}"
-                                   target="_blank"
-                                   class="text-success text-decoration-none"
+                                   target="_blank" class="text-success text-decoration-none"
                                    title="Hubungi via WhatsApp">
                                     <i class="bi bi-whatsapp me-1"></i>{{ $wali->no_telp }}
                                 </a>
                             @else
-                                <span class="text-muted fst-italic small">-</span>
+                                <span class="fst-italic small">-</span>
                             @endif
                         </td>
-
                         <td class="text-center">
                             @if($jumlahSiswa > 0)
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
@@ -133,7 +145,6 @@
                                 </span>
                             @endif
                         </td>
-
                         <td class="text-center">
                             <div class="d-flex justify-content-center gap-1">
                                 <a href="{{ route('admin.wali.edit', $wali->id_wali) }}"
@@ -143,7 +154,7 @@
                                 </a>
                                 <form action="{{ route('admin.wali.destroy', $wali->id_wali) }}"
                                       method="POST"
-                                      onsubmit="return confirm('Menghapus wali dapat mempengaruhi data siswa terkait.\nYakin hapus {{ addslashes($wali->nama_wali) }}?')">
+                                      onsubmit="return confirm('Hapus {{ addslashes($wali->nama_wali) }}?\nData siswa yang terhubung akan terpengaruh.')">
                                     @csrf @method('DELETE')
                                     <button type="submit"
                                             class="btn btn-sm btn-light text-danger"
@@ -159,22 +170,22 @@
                     <tr>
                         <td colspan="6" class="text-center text-muted py-5">
                             <i class="bi bi-people display-6 d-block mb-2 text-secondary"></i>
-                            Belum ada data wali siswa terdaftar.
+                            Tidak ada data wali siswa yang ditemukan.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-
-        <div id="emptyFilter" class="text-center text-muted py-5 d-none">
-            <i class="bi bi-search display-6 d-block mb-2 text-secondary"></i>
-            <p class="mb-0">Tidak ada wali yang cocok dengan pencarian.</p>
-            <button class="btn btn-sm btn-outline-secondary mt-2" id="btnResetEmpty"
-                    style="border-radius:8px;">Reset Filter</button>
-        </div>
     </div>
 
+    @if($walis->hasPages())
+        <div class="d-flex justify-content-center mt-3">
+            {{ $walis->links() }}
+        </div>
+    @endif
+
 </div>
+@endsection
 
 @push('styles')
 <style>
@@ -182,55 +193,3 @@
     .table-hover > tbody > tr:hover > * { background-color: #f8fafc; }
 </style>
 @endpush
-
-@push('scripts')
-<script>
-(function () {
-    const inputCari     = document.getElementById('inputCari');
-    const filterStatus  = document.getElementById('filterStatus');
-    const btnReset      = document.getElementById('btnReset');
-    const btnResetEmpty = document.getElementById('btnResetEmpty');
-    const jumlahTampil  = document.getElementById('jumlahTampil');
-    const emptyFilter   = document.getElementById('emptyFilter');
-    const tbody         = document.querySelector('#tabelWali tbody');
-
-    function filter() {
-        const cari   = inputCari.value.toLowerCase().trim();
-        const status = filterStatus.value;
-        const baris  = tbody.querySelectorAll('tr.baris-wali');
-        let tampil   = 0;
-
-        baris.forEach(tr => {
-            const cocokCari   = !cari   || tr.dataset.nama.includes(cari)
-                                        || tr.dataset.username.includes(cari)
-                                        || tr.dataset.telp.includes(cari);
-            const cocokStatus = !status || tr.dataset.punya === status;
-            const tampilkan   = cocokCari && cocokStatus;
-
-            tr.style.display = tampilkan ? '' : 'none';
-            if (tampilkan) {
-                tampil++;
-                tr.querySelector('.nomor-urut').textContent = tampil;
-            }
-        });
-
-        jumlahTampil.textContent = tampil;
-        const adaData = baris.length > 0;
-        emptyFilter.classList.toggle('d-none', !adaData || tampil > 0);
-    }
-
-    function reset() {
-        inputCari.value    = '';
-        filterStatus.value = '';
-        filter();
-    }
-
-    inputCari.addEventListener('input',      filter);
-    filterStatus.addEventListener('change',  filter);
-    btnReset.addEventListener('click',       reset);
-    btnResetEmpty.addEventListener('click',  reset);
-})();
-</script>
-@endpush
-
-@endsection

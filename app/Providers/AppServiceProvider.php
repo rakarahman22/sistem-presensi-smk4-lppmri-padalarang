@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\Paginator;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -41,5 +42,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('is-siswa', function () {
             return Auth::guard('siswa')->check();
         });
+
+        Paginator::useBootstrap();
     }
 }

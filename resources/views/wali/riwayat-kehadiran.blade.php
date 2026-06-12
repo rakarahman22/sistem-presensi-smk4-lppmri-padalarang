@@ -88,6 +88,12 @@
         .rekap-num  { font-size: 22px; font-weight: 700; }
         .rekap-lbl  { font-size: 10px; color: #64748b; margin-top: 2px; }
 
+        @media (max-width: 576px) {
+            .rekap-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
         /* ===== TABEL ===== */
         .table-container {
             background: white;
@@ -101,6 +107,7 @@
             font-weight: 600;
             border-bottom: 1px solid #e2e8f0;
             font-size: 12px;
+            white-space: nowrap;
         }
         table td {
             font-size: 12px;
@@ -109,6 +116,10 @@
         }
         table tr:last-child td { border-bottom: none; }
         table tr:hover { background-color: #f9fafb; }
+
+        /* Highlight baris alpa */
+        tr.row-alpa { background-color: #fef2f2; }
+        tr.row-alpa:hover { background-color: #fee2e2; }
 
         .td-hari   { font-size: 12px; color: #64748b; }
         .verify-ok { color: #22c55e; font-weight: 600; font-size: 11px; }
@@ -141,6 +152,27 @@
             flex-shrink: 0;
         }
         @keyframes spin-sm { to { transform: rotate(360deg); } }
+
+        /* ===== FOOTER TABEL (pagination) ===== */
+        .table-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+            background: #fafbfc;
+            font-size: 12px;
+            color: #64748b;
+        }
+        .table-footer .pagination {
+            margin: 0;
+        }
+        .table-footer .page-link {
+            font-size: 12px;
+            padding: 4px 10px;
+        }
     </style>
 
     {{-- Topbar --}}
@@ -258,18 +290,7 @@
     @endif
 
     {{-- ===== PROGRESS BAR + REKAP ===== --}}
-    @if ($riwayat->count() > 0)
-        @php
-            $cHadir     = $riwayat->where('status', 'Hadir')->count();
-            $cTerlambat = $riwayat->where('status', 'Terlambat')->count();
-            $cSakit     = $riwayat->where('status', 'Sakit')->count();
-            $cIzin      = $riwayat->where('status', 'Izin')->count();
-            $cAlpha     = $riwayat->whereIn('status', ['Alpa', 'Alpha'])->count();
-
-            $totalHari  = $riwayat->count();
-            $persentase = $totalHari > 0 ? round((($cHadir + $cTerlambat) / $totalHari) * 100) : 0;
-        @endphp
-
+    @if ($totalHari > 0)
         {{-- Progress bar --}}
         <div class="pct-bar-wrap">
             <div class="pct-top">
@@ -323,94 +344,131 @@
 
     {{-- ===== TABEL RIWAYAT ===== --}}
     <div class="table-container mb-3 border">
-        <table class="table mb-0">
-            <thead>
-                <tr>
-                    <th class="text-center" style="width:110px;">Tanggal</th>
-                    <th class="text-center" style="width:80px;">Hari</th>
-                    @if (!$idSiswaFilter)
-                        <th class="text-center">Nama Anak</th>
-                    @endif
-                    <th class="text-center" style="width:100px;">Jam Masuk</th>
-                    <th class="text-center" style="width:100px;">Status</th>
-                    <th class="text-center" style="width:130px;">Verifikasi Lokasi</th>
-                    <th class="text-center">Keterangan</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse ($riwayat as $p)
-                <tr>
-                    {{-- Tanggal --}}
-                    <td class="text-center fw-semibold" style="font-size:12px;">
-                        {{ \Carbon\Carbon::parse($p->tgl_presensi)->translatedFormat('d F Y') }}
-                    </td>
 
-                    {{-- Hari --}}
-                    <td class="text-center td-hari">
-                        {{ \Carbon\Carbon::parse($p->tgl_presensi)->translatedFormat('l') }}
-                    </td>
+        {{-- Header tabel: info total + select per_page --}}
+        @if ($riwayat->total() > 0)
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 px-3 py-2 border-bottom" style="background:#fafbfc;">
+            <span class="text-muted" style="font-size:12px;">
+                Menampilkan {{ $riwayat->firstItem() }}–{{ $riwayat->lastItem() }} dari <strong>{{ $riwayat->total() }}</strong> data
+            </span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="text-muted" style="font-size:12px;">Tampilkan</span>
+                <select onchange="window.location=this.value"
+                        class="form-select form-select-sm border-0 bg-light fw-semibold"
+                        style="width:auto;font-size:12px;cursor:pointer;">
+                    @foreach([10, 20, 50] as $opt)
+                    <option value="{{ request()->fullUrlWithQuery(['per_page' => $opt]) }}"
+                            {{ $perPage == $opt ? 'selected' : '' }}>
+                        {{ $opt }} data
+                    </option>
+                    @endforeach
+                </select>
+                <span class="text-muted" style="font-size:12px;">per halaman</span>
+            </div>
+        </div>
+        @endif
 
-                    @if (!$idSiswaFilter)
-                        <td class="text-center fw-semibold">{{ $p->nama_siswa }}</td>
-                    @endif
-
-                    {{-- Jam masuk --}}
-                    <td class="text-center">
-                        @if ($p->jam_masuk)
-                            <strong>{{ \Carbon\Carbon::parse($p->jam_masuk)->format('H:i') }} WIB</strong>
-                        @else
-                            <span class="text-muted">—</span>
+        {{-- Tabel responsive --}}
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th class="text-center" style="width:110px;">Tanggal</th>
+                        <th class="text-center" style="width:80px;">Hari</th>
+                        @if (!$idSiswaFilter)
+                            <th class="text-center">Nama Anak</th>
                         @endif
-                    </td>
+                        <th class="text-center" style="width:100px;">Jam Masuk</th>
+                        <th class="text-center" style="width:100px;">Status</th>
+                        <th class="text-center" style="width:130px;">Verifikasi Lokasi</th>
+                        <th class="text-center">Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($riwayat as $p)
+                    <tr class="{{ in_array(strtolower($p->status), ['alpa', 'alpha']) ? 'row-alpa' : '' }}">
+                        {{-- Tanggal --}}
+                        <td class="text-center fw-semibold" style="font-size:12px;">
+                            {{ \Carbon\Carbon::parse($p->tgl_presensi)->translatedFormat('d F Y') }}
+                        </td>
 
-                    {{-- Status --}}
-                    <td class="text-center">
-                        <span class="badge-status status-{{ strtolower($p->status) }}">
-                            {{ ucfirst($p->status) }}
-                        </span>
-                    </td>
+                        {{-- Hari --}}
+                        <td class="text-center td-hari">
+                            {{ \Carbon\Carbon::parse($p->tgl_presensi)->translatedFormat('l') }}
+                        </td>
 
-                    {{-- Verifikasi lokasi --}}
-                    <td class="text-center">
-                        @if (in_array(strtolower($p->status), ['hadir', 'terlambat']))
-                            <span class="verify-ok">
-                                <i class="bi bi-geo-alt-fill me-1"></i> Area Sekolah
+                        @if (!$idSiswaFilter)
+                            <td class="text-center fw-semibold">{{ $p->nama_siswa }}</td>
+                        @endif
+
+                        {{-- Jam masuk --}}
+                        <td class="text-center">
+                            @if ($p->jam_masuk)
+                                <strong>{{ \Carbon\Carbon::parse($p->jam_masuk)->format('H:i') }} WIB</strong>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Status --}}
+                        <td class="text-center">
+                            <span class="badge-status status-{{ strtolower($p->status) }}">
+                                {{ ucfirst($p->status) }}
                             </span>
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
-                    </td>
+                        </td>
 
-                    {{-- Keterangan — tampilkan badge koreksi jika ada --}}
-                    <td class="text-center">
-                        @if (!empty($p->status_awal) && $p->status_awal !== $p->status)
-                            <div class="koreksi-wrap">
-                                <span class="koreksi-badge">
-                                    <i class="bi bi-pencil-fill" style="font-size:9px;"></i>
-                                    <span class="koreksi-old">{{ ucfirst($p->status_awal) }}</span>
-                                    → {{ ucfirst($p->status) }}
+                        {{-- Verifikasi lokasi --}}
+                        <td class="text-center">
+                            @if (in_array(strtolower($p->status), ['hadir', 'terlambat']))
+                                <span class="verify-ok">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> Area Sekolah
                                 </span>
-                                @if (!empty($p->dikoreksi_oleh))
-                                    <span class="koreksi-by">oleh {{ $p->dikoreksi_oleh }}</span>
-                                @endif
-                            </div>
-                        @elseif (!empty($p->keterangan))
-                            <span class="text-muted" style="font-size:12px;">{{ $p->keterangan }}</span>
-                        @else
-                            <span class="text-muted">—</span>
-                        @endif
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="{{ $idSiswaFilter ? 6 : 7 }}" class="text-center py-5 text-muted">
-                        <i class="bi bi-calendar-x" style="font-size:36px; opacity:0.3; display:block; margin-bottom:8px;"></i>
-                        Tidak ada data presensi untuk periode ini.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+
+                        {{-- Keterangan — tampilkan badge koreksi jika ada --}}
+                        <td class="text-center">
+                            @if (!empty($p->status_awal) && $p->status_awal !== $p->status)
+                                <div class="koreksi-wrap">
+                                    <span class="koreksi-badge">
+                                        <i class="bi bi-pencil-fill" style="font-size:9px;"></i>
+                                        <span class="koreksi-old">{{ ucfirst($p->status_awal) }}</span>
+                                        → {{ ucfirst($p->status) }}
+                                    </span>
+                                    @if (!empty($p->dikoreksi_oleh))
+                                        <span class="koreksi-by">oleh {{ $p->dikoreksi_oleh }}</span>
+                                    @endif
+                                </div>
+                            @elseif (!empty($p->keterangan))
+                                <span class="text-muted" style="font-size:12px;">{{ $p->keterangan }}</span>
+                            @else
+                                <span class="text-muted">—</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="{{ $idSiswaFilter ? 6 : 7 }}" class="text-center py-5 text-muted">
+                            <i class="bi bi-calendar-x" style="font-size:36px; opacity:0.3; display:block; margin-bottom:8px;"></i>
+                            Tidak ada data presensi untuk periode ini.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Footer pagination --}}
+        @if ($riwayat->total() > 0)
+        <div class="table-footer">
+            <span>
+                Halaman {{ $riwayat->currentPage() }} dari {{ $riwayat->lastPage() }}
+            </span>
+            {{ $riwayat->links() }}
+        </div>
+        @endif
     </div>
 
     <p class="security-note">
@@ -438,28 +496,23 @@
         });
 
         // ── Input tanggal: submit setelah keduanya terisi, dengan debounce 600ms
-        // Ini mencegah submit di tengah-tengah user belum selesai pilih tanggal akhir.
         let debounceTimer = null;
 
         function handleDateChange() {
             const dari    = inputTglDari.value;
             const sampai  = inputTglSampai.value;
 
-            // Kalau salah satu dikosongkan, submit langsung (reset ke filter bulan/tahun)
             if (!dari && !sampai) {
                 clearTimeout(debounceTimer);
                 submitForm();
                 return;
             }
 
-            // Kalau keduanya sudah diisi, tunggu 600ms baru submit
             if (dari && sampai) {
                 clearTimeout(debounceTimer);
                 debounceTimer = setTimeout(submitForm, 600);
                 return;
             }
-
-            // Kalau baru satu yang diisi, belum perlu submit
         }
 
         document.querySelectorAll('.date-auto-submit').forEach(function (el) {

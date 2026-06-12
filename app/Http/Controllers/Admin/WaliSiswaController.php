@@ -9,23 +9,38 @@ use Illuminate\Support\Facades\Hash;
 
 class WaliSiswaController extends Controller
 {
-    // 1. Menampilkan Tabel Utama Wali Siswa
-    public function index()
+    public function index(Request $request)
     {
-        $walis = WaliSiswa::orderBy('nama_wali')->get();
-        
-        // FIX: Mengarah ke resources/views/admin/kelolawalisiswa/data-walisiswa.blade.php
-        return view('admin.kelolawalisiswa.data-walisiswa', compact('walis'));
+        $perPage = in_array($request->per_page, [10, 25, 50, 100, 500]) ? $request->per_page : 10;
+
+        $query = WaliSiswa::with('siswa')->orderBy('nama_wali');
+
+        if ($request->filled('cari')) {
+            $query->where(function ($q) use ($request) {
+                $q->where('nama_wali', 'LIKE', '%' . $request->cari . '%')
+                  ->orWhere('username', 'LIKE', '%' . $request->cari . '%')
+                  ->orWhere('no_telp', 'LIKE', '%' . $request->cari . '%');
+            });
+        }
+
+        if ($request->filled('status_siswa')) {
+            if ($request->status_siswa === 'punya') {
+                $query->whereHas('siswa');
+            } else {
+                $query->whereDoesntHave('siswa');
+            }
+        }
+
+        $walis = $query->paginate($perPage)->withQueryString();
+
+        return view('admin.kelolawalisiswa.data-walisiswa', compact('walis', 'perPage'));
     }
 
-    // 2. Menampilkan Form Tambah Wali Siswa
     public function create()
     {
-        // FIX: Mengarah ke resources/views/admin/kelolawalisiswa/create-walisiswa.blade.php
         return view('admin.kelolawalisiswa.create-walisiswa');
     }
 
-    // 3. Memproses Data Wali Baru ke Database
     public function store(Request $request)
     {
         $request->validate([
@@ -45,16 +60,12 @@ class WaliSiswaController extends Controller
         return redirect()->route('admin.wali')->with('success', 'Wali Siswa baru berhasil didaftarkan!');
     }
 
-    // 4. Menampilkan Form Edit Wali Siswa
     public function edit($id_wali)
     {
         $wali = WaliSiswa::findOrFail($id_wali);
-        
-        // FIX: Mengarah ke resources/views/admin/kelolawalisiswa/edit-walisiswa.blade.php
         return view('admin.kelolawalisiswa.edit-walisiswa', compact('wali'));
     }
 
-    // 5. Memproses Perubahan Data Wali Siswa
     public function update(Request $request, $id_wali)
     {
         $wali = WaliSiswa::findOrFail($id_wali);
@@ -77,16 +88,12 @@ class WaliSiswaController extends Controller
         }
 
         $wali->update($data);
-
         return redirect()->route('admin.wali')->with('success', 'Data Wali Siswa berhasil diperbarui!');
     }
 
-    // 6. Memproses Hapus Data Wali Siswa
     public function destroy($id_wali)
     {
-        $wali = WaliSiswa::findOrFail($id_wali);
-        $wali->delete();
-
+        WaliSiswa::findOrFail($id_wali)->delete();
         return redirect()->route('admin.wali')->with('success', 'Data Wali Siswa berhasil dihapus!');
     }
 }

@@ -9,20 +9,22 @@ class Kelas extends Model
     protected $table = 'kelas';
     protected $primaryKey = 'id_kelas';
 
-    // FIX: Daftarkan id_guru di sini agar diizinkan masuk ke database!
     protected $fillable = [
-        'id_guru', // ← WAJIB DITAMBAHKAN
+        'id_guru',
         'nama_kelas',
         'tingkat',
-        'jurusan'
+        'jurusan',
     ];
 
+    /**
+     * FIX: Sertakan FK dan PK secara eksplisit agar relasi tidak bergantung
+     * pada konvensi nama yang bisa berbeda antar versi Laravel.
+     */
     public function siswa()
     {
-        return $this->hasMany(Siswa::class, 'id_kelas');
+        return $this->hasMany(Siswa::class, 'id_kelas', 'id_kelas');
     }
 
-    // Pastikan fungsi relasi ini juga sudah ada di dalam model Kelas kamu
     public function waliKelas()
     {
         return $this->belongsTo(Guru::class, 'id_guru', 'id_guru');

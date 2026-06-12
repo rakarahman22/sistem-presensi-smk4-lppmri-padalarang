@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Data Guru - SMK 4 LPPM RI Padalarang')
+@section('title', 'Data Guru')
 
 @section('content')
 
@@ -10,7 +10,7 @@
             <i class="bi bi-person-workspace me-2"></i>Data Guru
         </h4>
         <p class="text-muted small mb-0 mt-1">
-            Total <strong>{{ $gurus->count() }}</strong> guru terdaftar
+            Total <strong>{{ $gurus->total() }}</strong> guru terdaftar
         </p>
     </div>
     <a href="{{ route('admin.guru.create') }}"
@@ -27,47 +27,78 @@
     </div>
 @endif
 
-
 <div class="card border-0 shadow-sm p-4" style="border-radius:20px;">
 
-    {{-- ── TOOLBAR ── --}}
-    <div class="row g-2 mb-3 align-items-end">
-        <div class="col-12 col-md-5">
-            <label class="form-label fw-semibold small mb-1 text-muted">Cari Guru</label>
-            <div class="input-group">
-                <span class="input-group-text bg-light border-end-0 text-muted">
-                    <i class="bi bi-search"></i>
-                </span>
-                <input type="text" id="inputCari" class="form-control bg-light border-start-0"
-                       placeholder="Nama, NIP, atau username..."
-                       style="border-radius:0 10px 10px 0;">
+    <form method="GET" action="{{ route('admin.guru') }}">
+        <div class="row g-2 mb-3 align-items-end">
+
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-semibold small mb-1 text-muted">Cari Guru</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-end-0 text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" name="cari" value="{{ request('cari') }}"
+                           class="form-control bg-light border-start-0"
+                           placeholder="Nama, NIP, atau username..."
+                           style="border-radius:0 10px 10px 0;">
+                </div>
             </div>
+
+            <div class="col-6 col-md-3">
+                <label class="form-label fw-semibold small mb-1 text-muted">Status Wali Kelas</label>
+                <select name="status_wali" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    <option value="">Semua</option>
+                    <option value="mengampu" {{ request('status_wali') == 'mengampu' ? 'selected' : '' }}>
+                        Sudah mengampu
+                    </option>
+                    <option value="belum" {{ request('status_wali') == 'belum' ? 'selected' : '' }}>
+                        Belum mengampu
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-4 col-md-1">
+                <label class="form-label fw-semibold small mb-1 text-muted">Tampilkan</label>
+                <select name="per_page" class="form-select" style="border-radius:10px;"
+                        onchange="this.form.submit()">
+                    @foreach([10, 25, 50, 100, 500] as $n)
+                        <option value="{{ $n }}" {{ $perPage == $n ? 'selected' : '' }}>{{ $n }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div class="col-4 col-md-1">
+                <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
+                <button type="submit" class="btn btn-primary w-100" style="border-radius:10px;">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+
+            <div class="col-4 col-md-1">
+                <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
+                <a href="{{ route('admin.guru') }}" class="btn btn-outline-secondary w-100"
+                   style="border-radius:10px;" title="Reset">
+                    <i class="bi bi-x-lg"></i>
+                </a>
+            </div>
+
         </div>
-        <div class="col-6 col-md-3">
-            <label class="form-label fw-semibold small mb-1 text-muted">Status Wali Kelas</label>
-            <select id="filterWali" class="form-select" style="border-radius:10px;">
-                <option value="">Semua</option>
-                <option value="mengampu">Sudah mengampu kelas</option>
-                <option value="belum">Belum mengampu kelas</option>
-            </select>
-        </div>
-        <div class="col-3 col-md-1">
-            <label class="form-label small mb-1 d-block" style="visibility:hidden;">x</label>
-            <button id="btnReset" class="btn btn-outline-secondary w-100"
-                    style="border-radius:10px;" title="Reset">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="col-3 col-md-3 d-flex align-items-end justify-content-end">
-            <p class="text-muted small mb-0">
-                Menampilkan <strong id="jumlahTampil">{{ $gurus->count() }}</strong> guru
-            </p>
-        </div>
+    </form>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <p class="text-muted small mb-0">
+            Menampilkan <strong>{{ $gurus->firstItem() ?? 0 }}</strong>–<strong>{{ $gurus->lastItem() ?? 0 }}</strong>
+            dari <strong>{{ $gurus->total() }}</strong> guru
+        </p>
+        <p class="text-muted small mb-0">
+            Halaman {{ $gurus->currentPage() }} dari {{ $gurus->lastPage() }}
+        </p>
     </div>
 
-    {{-- ── TABEL ── --}}
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="tabelGuru" style="font-size:0.93rem;">
+        <table class="table table-hover align-middle mb-0" style="font-size:0.93rem;">
             <thead class="table-light text-muted fw-semibold">
                 <tr>
                     <th class="ps-3" style="width:55px;">No</th>
@@ -76,24 +107,18 @@
                     <th>Jabatan</th>
                     <th>Username</th>
                     <th>Wali Kelas</th>
-                    <th class="text-center" style="width:130px;">Aksi</th>
+                    <th class="text-center" style="width:100px;">Aksi</th>
                 </tr>
             </thead>
             <tbody>
                 @forelse($gurus as $i => $guru)
-                    <tr class="baris-guru"
-                        data-nama="{{ strtolower($guru->nama_guru) }}"
-                        data-nip="{{ $guru->nip }}"
-                        data-username="{{ strtolower($guru->username) }}"
-                        data-wali="{{ $guru->kelasDiampu ? 'mengampu' : 'belum' }}">
-
-                        <td class="ps-3 text-muted fw-medium nomor-urut">{{ $i + 1 }}</td>
+                    <tr>
+                        <td class="ps-3 text-muted fw-medium">{{ $gurus->firstItem() + $i }}</td>
                         <td class="text-muted fw-medium">{{ $guru->nip }}</td>
                         <td class="fw-semibold text-dark">{{ $guru->nama_guru }}</td>
                         <td class="text-muted small">{{ $guru->jabatan ?? '-' }}</td>
                         <td>
-                            <span class="badge bg-light text-secondary border px-2 py-1"
-                                  style="border-radius:6px;">
+                            <span class="badge bg-light text-secondary border px-2 py-1" style="border-radius:6px;">
                                 {{ $guru->username }}
                             </span>
                         </td>
@@ -115,7 +140,6 @@
                                    style="border-radius:8px;" title="Edit">
                                     <i class="bi bi-pencil-square"></i>
                                 </a>
-
                                 <form action="{{ route('admin.guru.destroy', $guru->id_guru) }}"
                                       method="POST"
                                       onsubmit="return confirm('Hapus data {{ addslashes($guru->nama_guru) }}?')">
@@ -132,21 +156,22 @@
                     <tr>
                         <td colspan="7" class="text-center text-muted py-5">
                             <i class="bi bi-person-x display-6 d-block mb-2 text-secondary"></i>
-                            Belum ada data guru terdaftar.
+                            Tidak ada data guru yang ditemukan.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
-
-        <div id="emptyFilter" class="text-center text-muted py-5 d-none">
-            <i class="bi bi-search display-6 d-block mb-2 text-secondary"></i>
-            <p class="mb-0">Tidak ada guru yang cocok.</p>
-            <button class="btn btn-sm btn-outline-secondary mt-2" id="btnResetEmpty"
-                    style="border-radius:8px;">Reset Filter</button>
-        </div>
     </div>
+
+    @if($gurus->hasPages())
+        <div class="d-flex justify-content-center mt-3">
+            {{ $gurus->links() }}
+        </div>
+    @endif
+
 </div>
+@endsection
 
 @push('styles')
 <style>
@@ -154,53 +179,3 @@
     .table-hover > tbody > tr:hover > * { background-color: #f8fafc; }
 </style>
 @endpush
-
-@push('scripts')
-<script>
-(function () {
-    const inputCari     = document.getElementById('inputCari');
-    const filterWali    = document.getElementById('filterWali');
-    const btnReset      = document.getElementById('btnReset');
-    const btnResetEmpty = document.getElementById('btnResetEmpty');
-    const jumlahTampil  = document.getElementById('jumlahTampil');
-    const emptyFilter   = document.getElementById('emptyFilter');
-    const tbody         = document.querySelector('#tabelGuru tbody');
-
-    function filter() {
-        const cari  = inputCari.value.toLowerCase().trim();
-        const wali  = filterWali.value;
-        const baris = tbody.querySelectorAll('tr.baris-guru');
-        let tampil  = 0;
-
-        baris.forEach(tr => {
-            const cocokCari = !cari || tr.dataset.nama.includes(cari)
-                                    || tr.dataset.nip.includes(cari)
-                                    || tr.dataset.username.includes(cari);
-            const cocokWali = !wali || tr.dataset.wali === wali;
-            const tampilkan = cocokCari && cocokWali;
-
-            tr.style.display = tampilkan ? '' : 'none';
-            if (tampilkan) {
-                tampil++;
-                tr.querySelector('.nomor-urut').textContent = tampil;
-            }
-        });
-
-        jumlahTampil.textContent = tampil;
-        emptyFilter.classList.toggle('d-none', baris.length === 0 || tampil > 0);
-    }
-
-    function reset() {
-        inputCari.value  = '';
-        filterWali.value = '';
-        filter();
-    }
-    inputCari.addEventListener('input',     filter);
-    filterWali.addEventListener('change',   filter);
-    btnReset.addEventListener('click',      reset);
-    btnResetEmpty.addEventListener('click', reset);
-})();
-</script>
-@endpush
-
-@endsection

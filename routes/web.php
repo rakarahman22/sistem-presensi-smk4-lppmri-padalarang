@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminLaporanController;
+use App\Http\Controllers\Admin\AdminProfilController;
 use App\Http\Controllers\Admin\GeofenceController;
 use App\Http\Controllers\Admin\GuruController;
 use App\Http\Controllers\Admin\KelasController;
@@ -110,6 +112,9 @@ Route::middleware(['web', 'auth:guru'])->prefix('guru')->group(function () {
 
     // Tambah master mapel baru via modal AJAX
     Route::post('/absen-mapel/tambah-mapel-ajax', [\App\Http\Controllers\Guru\AbsenMapelController::class, 'tambahMapelAjax'])->name('guru.absen-mapel.tambah-mapel-ajax');
+
+    Route::get('/profil',        [\App\Http\Controllers\Guru\GuruProfilController::class, 'index'])->name('guru.profil');
+    Route::put('/profil/update', [\App\Http\Controllers\Guru\GuruProfilController::class, 'update'])->name('guru.profil.update');
 });
 
 // AREA ROUTE ADMIN PANEL (CENTRALIZED & OPTIMIZED)
@@ -119,6 +124,9 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     // Halaman Dashboard Utama Admin
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])
         ->name('admin.dashboard');
+
+    Route::get('/profil',        [AdminProfilController::class, 'index'])->name('admin.profil');
+    Route::put('/profil/update', [AdminProfilController::class, 'update'])->name('admin.profil.update');
 
     // CRUD DATA SISWA
     Route::get('/data-siswa', [SiswaController::class, 'index'])->name('admin.siswa');
@@ -172,12 +180,6 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::put('/admin/presensi-siswa/{id}/koreksi', [PresensiAdminController::class, 'koreksi'])
         ->name('admin.presensi.koreksi');
 
-
-    // LAPORAN PRESENSI
-    Route::get('/laporan', function () {
-        return view('admin.laporan');
-    })->name('admin.laporan');
-
     // CONFIG GEOFENCING LOKASI SEKOLAH
     Route::get('/pengaturan-lokasi', [GeofenceController::class, 'index'])->name('admin.lokasi');
     Route::post('/pengaturan-lokasi', [GeofenceController::class, 'update'])->name('admin.lokasi.update');
@@ -197,6 +199,9 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
 
     Route::get('/pengaturan/backup', [PengaturanController::class, 'backup'])
         ->name('admin.pengaturan.backup');
+
+        Route::get('/laporan/presensi',        [AdminLaporanController::class, 'presensiIndex'])->name('admin.laporan.presensi');
+Route::get('/laporan/presensi/export', [AdminLaporanController::class, 'presensiExport'])->name('admin.laporan.presensi.export');
 });
 
 // AREA GRUP RUTE WALI SISWA
