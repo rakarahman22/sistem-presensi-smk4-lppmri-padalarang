@@ -5,11 +5,15 @@ use App\Http\Controllers\Admin\AdminLaporanController;
 use App\Http\Controllers\Admin\AdminProfilController;
 use App\Http\Controllers\Admin\GeofenceController;
 use App\Http\Controllers\Admin\GuruController;
+use App\Http\Controllers\Admin\GuruImportController;
 use App\Http\Controllers\Admin\KelasController;
+use App\Http\Controllers\Admin\KelasImportController;
 use App\Http\Controllers\Admin\PengaturanController;
 use App\Http\Controllers\Admin\PlotMengajarController;
 use App\Http\Controllers\Admin\PresensiAdminController;
 use App\Http\Controllers\Admin\SiswaController;
+use App\Http\Controllers\Admin\SiswaImportController;
+use App\Http\Controllers\Admin\WaliImportController;
 use App\Http\Controllers\Admin\WaliSiswaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Guru\GuruDashboardController;
@@ -135,6 +139,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/data-siswa/{id_siswa}/edit', [SiswaController::class, 'edit'])->name('admin.siswa.edit');
     Route::put('/data-siswa/{id_siswa}', [SiswaController::class, 'update'])->name('admin.siswa.update');
     Route::delete('/data-siswa/{id_siswa}', [SiswaController::class, 'destroy'])->name('admin.siswa.destroy');
+    Route::get('/admin/siswa/template', [SiswaImportController::class, 'template'])->name('admin.siswa.template');
+    Route::post('/admin/siswa/import',  [SiswaImportController::class, 'import'])->name('admin.siswa.import');
 
     // CRUD DATA WALI SISWA
     Route::get('/data-wali', [WaliSiswaController::class, 'index'])->name('admin.wali');
@@ -143,6 +149,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/data-wali/{id_wali}/edit', [WaliSiswaController::class, 'edit'])->name('admin.wali.edit');
     Route::put('/data-wali/{id_wali}', [WaliSiswaController::class, 'update'])->name('admin.wali.update');
     Route::delete('/data-wali/{id_wali}', [WaliSiswaController::class, 'destroy'])->name('admin.wali.destroy');
+    Route::get('/admin/wali/template', [WaliImportController::class, 'template'])
+        ->name('admin.wali.template');
+    Route::post('/admin/wali/import', [WaliImportController::class, 'import'])
+        ->name('admin.wali.import');
 
     // CRUD DATA GURU
     Route::get('/data-guru', [GuruController::class, 'index'])->name('admin.guru');
@@ -151,6 +161,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/data-guru/{id_guru}/edit', [GuruController::class, 'edit'])->name('admin.guru.edit');
     Route::put('/data-guru/{id_guru}', [GuruController::class, 'update'])->name('admin.guru.update');
     Route::delete('/data-guru/{id_guru}', [GuruController::class, 'destroy'])->name('admin.guru.destroy');
+    Route::get('/admin/guru/template', [GuruImportController::class, 'template'])
+        ->name('admin.guru.template');
+    Route::post('/admin/guru/import', [GuruImportController::class, 'import'])
+        ->name('admin.guru.import');
 
 
     // CRUD DATA KELAS
@@ -160,6 +174,10 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/data-kelas/{id_kelas}/edit', [KelasController::class, 'edit'])->name('admin.kelas.edit');
     Route::put('/data-kelas/{id_kelas}', [KelasController::class, 'update'])->name('admin.kelas.update');
     Route::delete('/data-kelas/{id_kelas}', [KelasController::class, 'destroy'])->name('admin.kelas.destroy');
+    Route::get('/admin/kelas/template', [KelasImportController::class, 'template'])
+        ->name('admin.kelas.template');
+    Route::post('/admin/kelas/import', [KelasImportController::class, 'import'])
+        ->name('admin.kelas.import');
 
     // CRUD DATA MASTER MATA PELAJARAN
     Route::get('/data-mapel', [\App\Http\Controllers\Admin\MapelController::class, 'index'])->name('admin.mapel');
@@ -200,8 +218,8 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::get('/pengaturan/backup', [PengaturanController::class, 'backup'])
         ->name('admin.pengaturan.backup');
 
-        Route::get('/laporan/presensi',        [AdminLaporanController::class, 'presensiIndex'])->name('admin.laporan.presensi');
-Route::get('/laporan/presensi/export', [AdminLaporanController::class, 'presensiExport'])->name('admin.laporan.presensi.export');
+    Route::get('/laporan/presensi',        [AdminLaporanController::class, 'presensiIndex'])->name('admin.laporan.presensi');
+    Route::get('/laporan/presensi/export', [AdminLaporanController::class, 'presensiExport'])->name('admin.laporan.presensi.export');
 });
 
 // AREA GRUP RUTE WALI SISWA
