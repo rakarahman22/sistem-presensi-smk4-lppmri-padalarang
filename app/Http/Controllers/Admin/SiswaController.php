@@ -46,6 +46,27 @@ class SiswaController extends Controller
         ));
     }
 
+    public function search(Request $request)
+    {
+        $q = $request->input('q', '');
+ 
+        // Minimal 2 karakter agar tidak query kosong
+        if (strlen($q) < 2) {
+            return response()->json([]);
+        }
+ 
+        $results = WaliSiswa::where('nama_wali', 'LIKE', '%' . $q . '%')
+            ->orderBy('nama_wali')
+            ->limit(20)                        // Batasi 20 hasil per request
+            ->get(['id_wali', 'nama_wali', 'no_telp'])
+            ->map(fn($wali) => [
+                'id'   => $wali->id_wali,
+                'text' => $wali->nama_wali . ' (No. Telp: ' . $wali->no_telp . ')',
+            ]);
+ 
+        return response()->json($results);
+    }
+
     public function create()
     {
         $kelas_list = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();

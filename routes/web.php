@@ -56,7 +56,8 @@ Route::prefix('siswa')->middleware('auth:siswa')->group(function () {
     Route::get('/presensi', [SiswaPresensiController::class, 'index'])
         ->name('siswa.presensi');
 
-    Route::post('/presensi/store', [SiswaPresensiController::class, 'store'])
+        Route::post('/presensi/store', [SiswaPresensiController::class, 'store'])
+        ->middleware('throttle:5,1') // max 5 percobaan per menit per user
         ->name('siswa.presensi.store');
 
     // Halaman riwayat (view)
@@ -141,6 +142,7 @@ Route::middleware('auth:admin')->prefix('admin')->group(function () {
     Route::delete('/data-siswa/{id_siswa}', [SiswaController::class, 'destroy'])->name('admin.siswa.destroy');
     Route::get('/admin/siswa/template', [SiswaImportController::class, 'template'])->name('admin.siswa.template');
     Route::post('/admin/siswa/import',  [SiswaImportController::class, 'import'])->name('admin.siswa.import');
+    Route::get('/wali/search', [SiswaController::class, 'search'])->name('admin.wali.search');
 
     // CRUD DATA WALI SISWA
     Route::get('/data-wali', [WaliSiswaController::class, 'index'])->name('admin.wali');

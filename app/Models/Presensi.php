@@ -15,11 +15,12 @@ class Presensi extends Model
         'jam_masuk',
         'lat_siswa',
         'long_siswa',
+        'accuracy',
         'status',
-        'keterangan',
         'status_awal',
         'dikoreksi_oleh',
-        'edited_by',    // FIX: ada di DB tapi belum di fillable
+        'keterangan',
+        'edited_by',
         'edited_at',
     ];
 

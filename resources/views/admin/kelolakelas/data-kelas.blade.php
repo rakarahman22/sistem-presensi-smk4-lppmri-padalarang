@@ -313,8 +313,8 @@
                         <ul class="mb-0 ps-3 small" style="color:#78350f; line-height:1.8;">
                             <li>Gunakan template yang tersedia agar format sesuai.</li>
                             <li>Kolom wajib: <code>nama_kelas</code> dan <code>tingkat</code>.</li>
-                            <li>Duplikat (nama kelas + tingkat + jurusan sama) akan dilewati.</li>
-                            <li>Wali kelas tidak dapat diimpor — assign manual setelah import.</li>
+                            <li>Wali kelas dicocokkan by nama guru — pastikan guru sudah ada di sistem.</li>
+                            <li>Kombinasi tingkat + nama kelas duplikat akan dilewati otomatis.</li>
                         </ul>
                     </div>
 
@@ -399,18 +399,18 @@ function previewFile(suffix, input) {
     }
 
     const kb = (file.size / 1024).toFixed(1);
-    document.getElementById('fileName'    + suffix).textContent = file.name + ' (' + kb + ' KB)';
-    document.getElementById('filePreview' + suffix).classList.remove('d-none');
-    document.getElementById('filePreview' + suffix).classList.add('d-flex');
-    document.getElementById('dropzone'    + suffix).style.display = 'none';
+    document.getElementById('fileName'   + suffix).textContent = file.name + ' (' + kb + ' KB)';
+    document.getElementById('filePreview'+ suffix).classList.remove('d-none');
+    document.getElementById('filePreview'+ suffix).classList.add('d-flex');
+    document.getElementById('dropzone'   + suffix).style.display = 'none';
 }
 
 // ─── Hapus file yang dipilih ─────────────────────────────────────────────────
 function clearFile(suffix) {
-    document.getElementById('fileInput'   + suffix).value = '';
-    document.getElementById('filePreview' + suffix).classList.add('d-none');
-    document.getElementById('filePreview' + suffix).classList.remove('d-flex');
-    document.getElementById('dropzone'    + suffix).style.display = '';
+    document.getElementById('fileInput'  + suffix).value = '';
+    document.getElementById('filePreview'+ suffix).classList.add('d-none');
+    document.getElementById('filePreview'+ suffix).classList.remove('d-flex');
+    document.getElementById('dropzone'   + suffix).style.display = '';
 }
 
 // ─── Submit dengan loading state ─────────────────────────────────────────────
@@ -420,9 +420,9 @@ function submitImport(suffix, formId) {
         alert('Pilih file terlebih dahulu!');
         return;
     }
-    document.getElementById('btnText'    + suffix).classList.add('d-none');
-    document.getElementById('btnLoading' + suffix).classList.remove('d-none');
-    document.getElementById('btnImport'  + suffix).disabled = true;
+    document.getElementById('btnText'   + suffix).classList.add('d-none');
+    document.getElementById('btnLoading'+ suffix).classList.remove('d-none');
+    document.getElementById('btnImport' + suffix).disabled = true;
     document.getElementById(formId).submit();
 }
 

@@ -27,23 +27,26 @@ class KelasImportController extends Controller
             'file_import.mimes'    => 'Format file harus .xlsx, .xls, atau .csv.',
             'file_import.max'      => 'Ukuran file maksimal 5 MB.',
         ]);
-
+    
         try {
             $import = new KelasImport();
             Excel::import($import, $request->file('file_import'));
-
+    
             $imported = $import->getRowCount();
             $skipped  = $import->getSkippedCount();
-
+            $details  = $import->getSkippedDetails();
+    
             $msg = "Import selesai: {$imported} kelas berhasil diimpor";
             if ($skipped > 0) {
                 $msg .= ", {$skipped} baris dilewati (duplikat atau data tidak lengkap).";
             } else {
                 $msg .= '.';
             }
-
-            return redirect()->route('admin.kelas')->with('success', $msg);
-
+    
+            return redirect()->route('admin.kelas')
+                ->with('success', $msg)
+                ->with('import_details', $details); // tampilkan di blade untuk debugging
+    
         } catch (\Exception $e) {
             return redirect()->route('admin.kelas')
                 ->with('import_error', 'Terjadi kesalahan saat memproses file: ' . $e->getMessage());
@@ -61,9 +64,10 @@ class KelasImportController extends Controller
 
         // ── Definisi kolom ────────────────────────────────────────────────────
         $columns = [
-            ['key' => 'nama_kelas', 'label' => 'Nama Kelas *',  'width' => 22, 'required' => true],
-            ['key' => 'tingkat',    'label' => 'Tingkat *',      'width' => 16, 'required' => true],
-            ['key' => 'jurusan',    'label' => 'Jurusan',        'width' => 30, 'required' => false],
+            ['key' => 'nama_kelas',      'label' => 'Nama Kelas *',    'width' => 18, 'required' => true],
+            ['key' => 'tingkat',         'label' => 'Tingkat *',        'width' => 14, 'required' => true],
+            ['key' => 'jurusan',         'label' => 'Jurusan',          'width' => 36, 'required' => false],
+            ['key' => 'nama_wali_kelas', 'label' => 'Nama Wali Kelas', 'width' => 30, 'required' => false],
         ];
 
         $colCount = count($columns);
@@ -124,9 +128,9 @@ class KelasImportController extends Controller
 
         // ── Baris 3–5: Contoh data ────────────────────────────────────────────
         $examples = [
-            ['A',  '10', 'Teknik Komputer dan Jaringan'],
-            ['B',  '11', 'Rekayasa Perangkat Lunak'],
-            ['C',  '12', ''],
+            ['TKJ 1',  'X',   'Teknik Komputer dan Jaringan',  'Dr. Budi Setiawan, M.Pd'],
+            ['RPL 1',  'X',   'Rekayasa Perangkat Lunak',      ''],
+            ['TKJ 2',  'XI',  'Teknik Komputer dan Jaringan',  'Siti Aminah, S.Pd'],
         ];
 
         foreach ($examples as $ri => $row) {
@@ -167,13 +171,12 @@ class KelasImportController extends Controller
         // ── Catatan di bawah ─────────────────────────────────────────────────
         $noteRow = 22;
         $notes = [
-            ['⚠️  Jangan hapus atau ubah baris ke-2 (key teknis berwarna hijau muda) — baris ini wajib ada.',      'FF92400E'],
-            ['✅  Kolom bertanda * wajib diisi. Kolom lain boleh dikosongkan.',                                     'FF166534'],
-            ['🔢  Tingkat diisi angka, cth: 10, 11, atau 12.',                                                     'FF1E40AF'],
-            ['🏫  Nama Kelas diisi huruf/angka kelas, cth: A, B, 1, 2, TKJ-1.',                                   'FF1E40AF'],
-            ['📚  Jurusan boleh dikosongkan. Cth: Teknik Komputer dan Jaringan.',                                   'FF374151'],
-            ['🚫  Kombinasi Nama Kelas + Tingkat + Jurusan yang sudah ada akan dilewati otomatis.',                 'FF6B7280'],
-            ['👤  Wali kelas tidak bisa diimpor via Excel — assign wali kelas secara manual setelah import.',       'FF6B7280'],
+            ['⚠️  Jangan hapus atau ubah baris ke-2 (key teknis berwarna hijau muda) — baris ini wajib ada.',    'FF92400E'],
+            ['✅  Kolom bertanda * wajib diisi. Kolom lain boleh dikosongkan.',                                    'FF166534'],
+            ['📌  Tingkat: isi dengan X, XI, atau XII sesuai jenjang kelas.',                                     'FF1E40AF'],
+            ['👤  Nama Wali Kelas: isi sesuai nama guru yang sudah terdaftar di sistem (harus persis sama).',     'FF374151'],
+            ['🚫  Kombinasi Tingkat + Nama Kelas yang sama akan dilewati otomatis (duplikat).',                   'FF6B7280'],
+            ['💡  Urutan import yang disarankan: Kelas → Guru → Wali Siswa → Siswa.',                            'FF7C3AED'],
         ];
 
         $sheet->setCellValueByColumnAndRow(1, $noteRow, 'CATATAN PENGISIAN:');
